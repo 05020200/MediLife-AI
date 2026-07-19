@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="doctor-patients-section py-4 my-3">
+    <div class="container animate-fade-in">
+        
+        <div class="row g-4">
+            
+            <!-- Left Sidebar -->
+            <div class="col-lg-3">
+                <div class="sidebar-container mb-4">
+                    <div class="text-center pb-3 mb-3 border-bottom border-light">
+                        <div class="avatar-wrapper mb-2 mx-auto bg-primary-glow d-flex align-items-center justify-content-center rounded-circle" style="width: 60px; height: 60px;">
+                            <i class="fa-solid fa-user-doctor text-primary fs-2"></i>
+                        </div>
+                        <h6 class="font-outfit text-primary mb-1 fw-bold">Dr. {{ doctor.full_name }}</h6>
+                        <span class="badge bg-primary-glow text-primary mb-2 font-outfit small">Practitioner</span>
+                        <div class="small text-muted">{{ doctor.specialization }}</div>
+                    </div>
+                    
+                    <div class="nav flex-column">
+                        <a class="sidebar-nav-link" href="{{ url_for('main.doctor_dashboard') }}">
+                            <i class="fa-solid fa-gauge-high"></i> Dashboard
+                        </a>
+                        <a class="sidebar-nav-link active" href="{{ url_for('main.doctor_patient_directory') }}">
+                            <i class="fa-solid fa-users"></i> Patient Directory
+                        </a>
+                        <a href="{{ url_for('main.logout') }}" class="sidebar-nav-link text-danger mt-3 pt-3 border-top border-light">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Content Panel -->
+            <div class="col-lg-9">
+                <!-- Page Header -->
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                    <div>
+                        <h1 class="h2 font-outfit text-primary fw-bold mb-0">My Patient Directory</h1>
+                        <p class="text-muted-custom small mb-0">Manage clinical profiles and schedule consultation records for associated patients.</p>
+                    </div>
+                </div>
+
+                <!-- Search Panel -->
+                <div class="glass-card p-3 mb-4 border border-light shadow-sm">
+                    <div class="position-relative">
+                        <i class="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" id="patientSearchInput" class="form-control ps-5 font-sans" placeholder="Search patients by name, email, or phone...">
+                    </div>
+                </div>
+
+                <!-- Patients Directory Table -->
+                <div class="glass-card p-4 border border-light shadow-sm">
+                    {% if patients %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="patientsTable">
+                                <thead class="table-light">
+                                    <tr class="font-outfit text-primary small">
+                                        <th style="width: 35%">Patient Name</th>
+                                        <th style="width: 15%">Age / Gender</th>
+                                        <th style="width: 20%">Last Visit</th>
+                                        <th style="width: 20%">Next Appointment</th>
+                                        <th style="width: 10%" class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small text-dark font-sans">
+                                    {% for pat in patients %}
+                                        <tr class="patient-row-item">
+                                            <td>
+                                                <div class="fw-bold text-primary-light patient-name-cell">{{ pat.full_name }}</div>
+                                                <span class="text-muted small d-block patient-email-cell">{{ pat.email }}</span>
+                                                {% if pat.phone %}
+                                                    <span class="text-muted small d-block patient-phone-cell" style="font-size: 0.75rem;"><i class="fa-solid fa-phone me-1"></i> {{ pat.phone }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="fw-medium text-dark">{{ pat.age }} Years</div>
+                                                <span class="text-muted-custom small">{{ pat.gender }}</span>
+                                            </td>
+                                            <td class="text-muted">
+                                                {% if pat.last_visit %}
+                                                    <span class="d-block fw-semibold text-primary"><i class="fa-solid fa-calendar-check me-1 text-accent"></i> {{ (pat.last_visit | to_ist).strftime('%b %d, %Y') }}</span>
+                                                    <span class="small text-muted" style="font-size: 0.75rem;">{{ (pat.last_visit | to_ist).strftime('%I:%M %p') }}</span>
+                                                {% else %}
+                                                    <span class="text-muted italic small">No prior consultations</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-muted">
+                                                {% if pat.next_appointment %}
+                                                    <span class="d-block fw-semibold text-success"><i class="fa-regular fa-clock me-1 text-success"></i> {{ (pat.next_appointment.appointment_date | to_ist).strftime('%b %d, %Y') }}</span>
+                                                    <span class="small text-muted" style="font-size: 0.75rem;">{{ pat.next_appointment.session }}</span>
+                                                {% else %}
+                                                    <span class="text-muted small">No upcoming schedule</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-flex gap-1 justify-content-end align-items-center">
+                                                    <!-- View Profile Modal Trigger -->
+                                                    <button type="button" class="btn btn-outline-premium btn-sm py-1"
+                                                            data-bs-toggle="modal" data-bs-target="#viewPatientModal"
+                                                            data-id="{{ pat.id }}" data-fullname="{{ pat.full_name }}"
+                                                            data-email="{{ pat.email }}" data-phone="{{ pat.phone or 'Not Provided' }}"
+                                                            data-dob="{{ pat.date_of_birth.strftime('%B %d, %Y') }}"
+                                                            data-gender="{{ pat.gender }}" data-blood="{{ pat.blood_group or 'Not Provided' }}"
+                                                            data-address="{{ pat.address or 'Not Provided' }}"
+                                                            data-joined="{{ (pat.created_at | to_ist).strftime('%B %d, %Y') }}"
+                                                            title="View Demographics">
+                                                        <i class="fa-solid fa-id-card"></i> Profile
+                                                    </button>
+                                                    
+                                                    <!-- View Clinical History -->
+                                                    <a href="{{ url_for('main.patient_record', patient_id=pat.id) }}" class="btn btn-outline-secondary btn-sm py-1" title="View Clinical History">
+                                                        <i class="fa-solid fa-notes-medical"></i> History
+                                                    </a>
+                                                    
+                                                    <!-- Start Consultation -->
+                                                    {% if pat.active_appointment_id %}
+                                                        <a href="{{ url_for('main.consultation', appointment_id=pat.active_appointment_id) }}" class="btn btn-premium btn-sm py-1 text-white" title="Start Consultation Session">
+                                                            <i class="fa-solid fa-stethoscope"></i> Consult
+                                                        </a>
+                                                    {% else %}
+                                                        <button class="btn btn-outline-secondary btn-sm py-1" disabled title="No active scheduled appointment for this patient" style="opacity: 0.6;">
+                                                            <i class="fa-solid fa-stethoscope"></i> Consult
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-hospital-user fs-1 text-light mb-3"></i>
+                            <h6 class="fw-bold">No patient history found.</h6>
+                            <p class="small mb-0">Patients will appear in this directory automatically once they register appointments or complete clinical notes with you.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- View Patient Demographic Modal (Read-Only for Doctors) -->
+<div class="modal fade" id="viewPatientModal" tabindex="-1" aria-labelledby="viewPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient bg-primary text-white py-3 border-0 rounded-top-4">
+                <h5 class="modal-title font-outfit fw-bold text-white" id="viewPatientModalLabel">
+                    <i class="fa-solid fa-id-card me-2"></i> Patient Demographic Profile
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light text-dark small">
+                <div class="row g-3">
+                    <div class="col-12 border-bottom border-light pb-2 mb-2">
+                        <strong class="text-primary-light d-block small mb-1">Full Name</strong>
+                        <span class="fs-6 fw-bold text-primary" id="viewPatFullName"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Email Address</strong>
+                        <span class="fw-medium" id="viewPatEmail"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Phone Number</strong>
+                        <span class="fw-medium" id="viewPatPhone"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Date of Birth</strong>
+                        <span class="fw-medium" id="viewPatDob"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Gender</strong>
+                        <span class="fw-medium" id="viewPatGender"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Blood Group</strong>
+                        <span class="badge bg-light text-primary fs-6 font-outfit" id="viewPatBlood"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Registration Date</strong>
+                        <span class="fw-medium text-muted" id="viewPatJoined"></span>
+                    </div>
+                    <div class="col-12">
+                        <strong class="text-primary-light d-block small mb-1">Residential Address</strong>
+                        <div class="p-2 bg-white rounded border border-light" id="viewPatAddress" style="white-space: pre-wrap;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close Profile</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ----------------------------------------------------
+    // Live Search Filter Logic
+    // ----------------------------------------------------
+    const searchInput = document.getElementById('patientSearchInput');
+    const tableRows = document.querySelectorAll('.patient-row-item');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            tableRows.forEach(row => {
+                const nameCell = row.querySelector('.patient-name-cell').textContent.toLowerCase();
+                const emailCell = row.querySelector('.patient-email-cell').textContent.toLowerCase();
+                const phoneCell = row.querySelector('.patient-phone-cell') ? row.querySelector('.patient-phone-cell').textContent.toLowerCase() : '';
+                
+                if (nameCell.includes(query) || emailCell.includes(query) || phoneCell.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // ----------------------------------------------------
+    // Demographic Details Modal Binder
+    // ----------------------------------------------------
+    const viewPatientModal = document.getElementById('viewPatientModal');
+    if (viewPatientModal) {
+        viewPatientModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            
+            viewPatientModal.querySelector('#viewPatFullName').textContent = btn.getAttribute('data-fullname');
+            viewPatientModal.querySelector('#viewPatEmail').textContent = btn.getAttribute('data-email');
+            viewPatientModal.querySelector('#viewPatPhone').textContent = btn.getAttribute('data-phone');
+            viewPatientModal.querySelector('#viewPatDob').textContent = btn.getAttribute('data-dob');
+            viewPatientModal.querySelector('#viewPatGender').textContent = btn.getAttribute('data-gender');
+            viewPatientModal.querySelector('#viewPatBlood').textContent = btn.getAttribute('data-blood');
+            viewPatientModal.querySelector('#viewPatJoined').textContent = btn.getAttribute('data-joined');
+            viewPatientModal.querySelector('#viewPatAddress').textContent = btn.getAttribute('data-address');
+        });
+    }
+});
+</script>
+{% endblock %}

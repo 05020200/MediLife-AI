@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Conflict Resolution - MediLife AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .conflict-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        box-shadow: var(--shadow-medium);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-section py-4 my-3">
+    <div class="container animate-fade-in">
+        <div class="row g-4">
+            
+            <!-- Left Sidebar -->
+            <div class="col-lg-3">
+                <div class="sidebar-container mb-4">
+                    <div class="text-center pb-3 mb-3 border-bottom border-light">
+                        <div class="avatar-wrapper mb-2 mx-auto bg-primary-glow d-flex align-items-center justify-content-center rounded-circle" style="width: 60px; height: 60px;">
+                            <i class="fa-solid fa-user-shield text-primary fs-2"></i>
+                        </div>
+                        <h6 class="font-outfit text-primary mb-1 fw-bold">{{ admin.username }}</h6>
+                        <span class="badge bg-success-glow text-success mb-2 font-outfit small">Administrator</span>
+                    </div>
+                    
+                    <div class="nav flex-column">
+                        <a class="sidebar-nav-link" href="{{ url_for('main.admin_dashboard') }}">
+                            <i class="fa-solid fa-gauge-high"></i> Dashboard
+                        </a>
+                        <a class="sidebar-nav-link" href="{{ url_for('main.admin_users', tab='patients') }}">
+                            <i class="fa-solid fa-users"></i> Manage Patients
+                        </a>
+                        <a class="sidebar-nav-link" href="{{ url_for('main.admin_users', tab='doctors') }}">
+                            <i class="fa-solid fa-user-doctor"></i> Manage Doctors
+                        </a>
+                        <a class="sidebar-nav-link" href="{{ url_for('main.admin_users', tab='admins') }}">
+                            <i class="fa-solid fa-user-shield"></i> Manage Admins
+                        </a>
+                        <a class="sidebar-nav-link active" href="{{ url_for('main.admin_leaves') }}">
+                            <i class="fa-solid fa-calendar-times"></i> Doctor Leave Management
+                        </a>
+                        <a href="{{ url_for('main.logout') }}" class="sidebar-nav-link text-danger mt-3 pt-3 border-top border-light">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Content Panel -->
+            <div class="col-lg-9">
+                <!-- Page Header Banner -->
+                <div class="dashboard-header-banner p-4 bg-light rounded-4 border border-light shadow-sm mb-4">
+                    <span class="badge bg-danger-glow text-danger mb-2 font-outfit small">Conflict Resolution Required</span>
+                    <h1 class="h2 font-outfit text-primary fw-bold mb-1">Appointment Conflicts Detected</h1>
+                    <p class="text-muted-custom small mb-0">Dr. {{ leave.doctor.full_name }} is on leave on <strong>{{ leave.leave_date.strftime('%B %d, %Y') }}</strong> ({{ leave.session }}).</p>
+                </div>
+
+                <!-- Warning Alert -->
+                <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4 rounded-3 p-3 bg-warning-glow text-warning-custom">
+                    <i class="fa-solid fa-triangle-exclamation fs-4 me-3"></i>
+                    <div>
+                        <strong class="font-outfit">Warning:</strong> {{ appointments|length }} confirmed appointments are affected by this leave.
+                    </div>
+                </div>
+
+                <!-- Affected Appointments List -->
+                <div class="glass-card p-4 border border-light shadow-sm">
+                    <h5 class="font-outfit text-primary mb-4 d-flex align-items-center">
+                        <i class="fa-solid fa-calendar-minus text-accent me-2"></i> Affected Appointments
+                    </h5>
+                    
+                    {% if appointments %}
+                        <div class="d-flex flex-column gap-3">
+                            {% for item in appointments %}
+                                {% set app = item.appointment %}
+                                {% set sug = item.suggestion %}
+                                <div class="p-3 border border-light rounded-3 bg-light">
+                                    <div class="row g-3">
+                                        <!-- Patient Details -->
+                                        <div class="col-md-3">
+                                            <div class="small text-muted font-outfit uppercase">Patient</div>
+                                            <div class="fw-bold text-primary-light" style="font-size: 0.9rem;">{{ app.patient.full_name }}</div>
+                                            <div class="small text-muted mb-2" style="font-size: 0.75rem;">{{ app.patient.email }}</div>
+                                            <span class="badge bg-primary-glow text-primary" style="font-size: 0.7rem;">{{ app.session }} Session</span>
+                                        </div>
+                                        
+                                        <!-- Reason -->
+                                        <div class="col-md-3">
+                                            <div class="small text-muted font-outfit uppercase">Reason for Visit</div>
+                                            <p class="small text-dark mb-0 italic" style="font-size: 0.8rem;">"{{ app.reason or 'No reason provided' }}"</p>
+                                        </div>
+
+                                        <!-- Suggestion Acceptance -->
+                                        <div class="col-md-3 border-start border-light ps-3">
+                                            <div class="small text-muted font-outfit uppercase mb-2">Suggestion Box</div>
+                                            {% if sug %}
+                                                <div class="small text-muted mb-1">Earliest Available Slot:</div>
+                                                <div class="fw-bold text-success mb-2" style="font-size: 0.85rem;">
+                                                    <i class="fa-solid fa-circle-check"></i> {{ sug.display_date }}<br>
+                                                    <span class="ms-3">({{ sug.session }} Session)</span>
+                                                </div>
+                                                <form method="POST" action="{{ url_for('main.admin_accept_suggestion', appointment_id=app.id) }}">
+                                                    <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                                                    <input type="hidden" name="suggested_date" value="{{ sug.date_str }}">
+                                                    <input type="hidden" name="suggested_session" value="{{ sug.session }}">
+                                                    <button type="submit" class="btn btn-premium btn-xs text-white w-100"><i class="fa-solid fa-check me-1"></i> Accept Suggestion</button>
+                                                </form>
+                                            {% else %}
+                                                <div class="text-danger small fw-semibold py-2">
+                                                    <i class="fa-solid fa-triangle-exclamation"></i> No available slots found within the next 30 days. Manual scheduling is required.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Manual Reschedule -->
+                                        <div class="col-md-3 border-start border-light ps-3">
+                                            <div class="small text-muted font-outfit uppercase mb-2">Manual Reschedule</div>
+                                            <form method="POST" action="{{ url_for('main.admin_reschedule_appointment', appointment_id=app.id) }}">
+                                                <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                                                <div class="mb-1">
+                                                    <input type="date" class="form-control form-control-xs" name="new_date" required style="font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <select class="form-select form-select-xs" name="new_session" required style="font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                                                        <option value="Morning" {% if app.session == 'Morning' %}selected{% endif %}>Morning</option>
+                                                        <option value="Afternoon" {% if app.session == 'Afternoon' %}selected{% endif %}>Afternoon</option>
+                                                    </select>
+                                                </div>
+                                                <div class="d-flex gap-1">
+                                                    <button type="submit" class="btn btn-outline-secondary btn-xs flex-grow-1" style="font-size: 0.7rem;"><i class="fa-solid fa-clock"></i> Reschedule</button>
+                                                </div>
+                                            </form>
+                                            
+                                            <!-- Cancel action -->
+                                            <form method="POST" action="{{ url_for('main.admin_cancel_appointment_by_leave', appointment_id=app.id) }}" onsubmit="return confirm('Are you sure you want to cancel this appointment?');" class="mt-2">
+                                                <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                                                <button type="submit" class="btn btn-outline-danger btn-xs w-100" style="font-size: 0.7rem;"><i class="fa-solid fa-ban"></i> Cancel Appointment</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-circle-check fs-2 text-success mb-2"></i>
+                            <h6 class="font-outfit text-success fw-bold">All Conflicts Resolved!</h6>
+                            <p class="small mb-3">There are no remaining affected appointments for this leave record.</p>
+                            <a href="{{ url_for('main.admin_leaves') }}" class="btn btn-premium btn-sm text-white font-outfit">Go Back to Leaves</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

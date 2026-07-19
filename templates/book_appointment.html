@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Book Appointment - MediLife AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        box-shadow: var(--shadow-medium);
+    }
+    
+    .booking-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        border-radius: 19px 19px 0 0;
+        padding: 2.5rem;
+    }
+    
+    .form-floating > .form-control:focus, .form-floating > .form-select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="booking-section py-5 my-3">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Appointment Booking Card Container -->
+                <div class="booking-card animate-fade-in-up">
+                    <!-- Premium Header -->
+                    <div class="booking-header text-white text-center">
+                        <div class="brand-icon-wrapper bg-white mx-auto mb-3" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-calendar-check text-primary fs-4"></i>
+                        </div>
+                        <h2 class="h3 font-outfit fw-bold mb-1">Schedule Consultation</h2>
+                        <p class="small opacity-75 mb-0">Fill in the fields below to coordinate with our medical practitioners</p>
+                    </div>
+                    
+                    <!-- Form Body -->
+                    <div class="p-4 p-md-5">
+                        <form method="POST" action="{{ url_for('main.book_appointment') }}" class="custom-form">
+                            <div class="row g-4">
+                                
+                                <!-- Department Dropdown -->
+                                <div class="col-md-6">
+                                    <label for="departmentSelect" class="form-label small fw-semibold text-primary">Department</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-hospital"></i></span>
+                                        <select class="form-select border-start-0" id="departmentSelect" name="department" required>
+                                            <option value="" disabled selected>Select a Department...</option>
+                                            {% for dept in departments %}
+                                                <option value="{{ dept }}">{{ dept }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Doctor Dropdown -->
+                                <div class="col-md-6">
+                                    <label for="doctorSelect" class="form-label small fw-semibold text-primary">Practitioner</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-user-doctor"></i></span>
+                                        <select class="form-select border-start-0" id="doctorSelect" name="doctor_id" required>
+                                            <option value="" disabled selected>Select a Practitioner...</option>
+                                            {% for doc in doctors %}
+                                                <option value="{{ doc.id }}" 
+                                                        data-department="{{ doc.specialization }}"
+                                                        data-has-avail="{{ '1' if doc.has_configured_availability else '0' }}"
+                                                        data-weekly-avail="{% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}{{ day }}:{{ '1' if doc.is_available_day(day) else '0' }},{{ '1' if doc.is_available(day, 'morning') else '0' }},{{ doc.get_session_time(day, 'morning', 'start') }},{{ doc.get_session_time(day, 'morning', 'end') }},{{ '1' if doc.is_available(day, 'afternoon') else '0' }},{{ doc.get_session_time(day, 'afternoon', 'start') }},{{ doc.get_session_time(day, 'afternoon', 'end') }};{% endfor %}">
+                                                    Dr. {{ doc.first_name }} {{ doc.last_name }} ({{ doc.specialization }})
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Date Picker -->
+                                <div class="col-md-6">
+                                    <label for="appDate" class="form-label small fw-semibold text-primary">Appointment Date</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-calendar-day"></i></span>
+                                        <input type="date" class="form-control border-start-0" id="appDate" name="date" required>
+                                    </div>
+                                </div>
+                                
+                                <!-- Session Picker -->
+                                <div class="col-md-6">
+                                    <label for="appSession" class="form-label small fw-semibold text-primary">Session</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-regular fa-clock"></i></span>
+                                        <select class="form-select border-start-0" id="appSession" name="session" required>
+                                            <option value="" disabled selected>Select a Session...</option>
+                                            <option value="Morning">Morning</option>
+                                            <option value="Afternoon">Afternoon</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Doctor Availability Info Cards -->
+                                {% for doc in doctors %}
+                                <div class="col-12 d-none doc-avail-card" id="docAvailCard_{{ doc.id }}">
+                                    <div class="p-3 bg-light rounded border border-light text-start">
+                                        <h6 class="font-outfit text-primary fw-bold mb-3 small d-flex align-items-center">
+                                            <i class="fa-regular fa-calendar me-2 text-accent"></i> Practitioner's Weekly Session Availability
+                                        </h6>
+                                        <div class="d-flex flex-column gap-2">
+                                            {% if doc.has_configured_availability %}
+                                                {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                                                    {% set ns = namespace(found=None) %}
+                                                    {% for avail in doc.availabilities %}
+                                                        {% if avail.day == day %}
+                                                            {% set ns.found = avail %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    {% set avail = ns.found %}
+                                                    <div class="{% if loop.last %}pb-1{% else %}pb-2 mb-2 border-bottom border-light{% endif %}">
+                                                        <div class="fw-bold text-dark mb-1 small">{{ day }}</div>
+                                                        <div class="ps-2 small" style="line-height: 1.5;">
+                                                            {% if not avail or not avail.available %}
+                                                                <span class="text-danger fw-semibold">Not Available</span>
+                                                            {% else %}
+                                                                <div>
+                                                                    <span class="text-dark">Morning: </span>
+                                                                    {% if avail.morning and avail.morning_start and avail.morning_end and avail.morning_start != "Available" and avail.morning_end != "Available" %}
+                                                                        <span class="text-dark">{{ avail.morning_start }} – {{ avail.morning_end }}</span>
+                                                                    {% else %}
+                                                                        <span class="text-danger fw-semibold">Not Available</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="mt-1">
+                                                                    <span class="text-dark">Afternoon: </span>
+                                                                    {% if avail.afternoon and avail.afternoon_start and avail.afternoon_end and avail.afternoon_start != "Available" and avail.afternoon_end != "Available" %}
+                                                                        <span class="text-dark">{{ avail.afternoon_start }} – {{ avail.afternoon_end }}</span>
+                                                                    {% else %}
+                                                                        <span class="text-danger fw-semibold">Not Available</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="alert alert-info py-2 px-3 mb-0 small text-center">
+                                                    <i class="fa-solid fa-info-circle me-1"></i> Consultation availability has not been configured.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                <!-- Reason for Visit -->
+                                <div class="col-12">
+                                    <label for="appReason" class="form-label small fw-semibold text-primary">Reason for Visit</label>
+                                    <textarea class="form-control" id="appReason" name="reason" rows="4" placeholder="Briefly describe your symptoms or reason for scheduling..." required></textarea>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="col-12 mt-5 d-flex gap-3 justify-content-end">
+                                    <a href="{{ url_for('main.patient_dashboard') }}" class="btn btn-outline-premium py-2 px-4">Cancel</a>
+                                    <button type="submit" class="btn btn-premium text-white py-2 px-4">Request Booking</button>
+                                </div>
+                                
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Front-end Dynamic Filters and Validations -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const deptSelect = document.getElementById("departmentSelect");
+        const doctorSelect = document.getElementById("doctorSelect");
+        const dateInput = document.getElementById("appDate");
+        const form = document.querySelector("form");
+        
+        // Save initial doctor options
+        const doctorOptions = Array.from(doctorSelect.options);
+        
+        // Dynamic filtration of doctor dropdown based on selected department and availability display
+        function filterDoctors() {
+            const selectedDept = deptSelect.value;
+            
+            // Clear current options
+            doctorSelect.innerHTML = "";
+            
+            // Add default "Select a Practitioner..." option
+            const defaultOpt = document.createElement("option");
+            defaultOpt.value = "";
+            defaultOpt.disabled = true;
+            defaultOpt.selected = true;
+            defaultOpt.textContent = "Select a Practitioner...";
+            doctorSelect.appendChild(defaultOpt);
+            
+            // Re-insert options that match the selected department
+            doctorOptions.forEach(option => {
+                if (option.value === "") return;
+                
+                const docDept = option.getAttribute("data-department");
+                if (docDept === selectedDept) {
+                    const clonedOpt = option.cloneNode(true);
+                    clonedOpt.disabled = false;
+                    clonedOpt.style.display = "block";
+                    doctorSelect.appendChild(clonedOpt);
+                }
+            });
+            
+            doctorSelect.value = "";
+            document.querySelectorAll(".doc-avail-card").forEach(card => {
+                card.classList.add("d-none");
+            });
+        }
+        
+        deptSelect.addEventListener("change", filterDoctors);
+        
+        doctorSelect.addEventListener("change", function() {
+            // Hide all availability cards
+            document.querySelectorAll(".doc-avail-card").forEach(card => {
+                card.classList.add("d-none");
+            });
+            
+            // Show the card for the selected doctor
+            const selectedDocId = doctorSelect.value;
+            if (selectedDocId) {
+                const card = document.getElementById("docAvailCard_" + selectedDocId);
+                if (card) {
+                    card.classList.remove("d-none");
+                }
+            }
+        });
+        
+        // Limit Date Picker to select today or future dates
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const currentDateStr = `${yyyy}-${mm}-${dd}`;
+        dateInput.min = currentDateStr;
+    });
+</script>
+{% endblock %}

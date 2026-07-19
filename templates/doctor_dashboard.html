@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Dashboard - MediLife AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard specific styling */
+    .dashboard-header-banner {
+        background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(13, 148, 136, 0.05) 100%);
+        border: 1px solid rgba(30, 58, 138, 0.1);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.35rem 0.65rem;
+        border-radius: 50rem;
+        display: inline-block;
+    }
+    
+    .badge-pending {
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #d97706;
+    }
+    
+    .badge-confirmed {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #059669;
+    }
+    
+    .badge-cancelled {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #dc2626;
+    }
+    
+    .badge-completed {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #2563eb;
+    }
+
+    .bg-accent-glow {
+        background: rgba(13, 148, 136, 0.07);
+        color: var(--accent);
+        border: 1px solid rgba(13, 148, 136, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-section py-4 my-3">
+    <div class="container animate-fade-in">
+        
+        <div class="row g-4">
+            
+            <!-- Left Sidebar -->
+            <div class="col-lg-3">
+                <div class="sidebar-container mb-4">
+                    <div class="text-center pb-3 mb-3 border-bottom border-light">
+                        <div class="avatar-wrapper mb-2 mx-auto bg-primary-glow d-flex align-items-center justify-content-center rounded-circle" style="width: 60px; height: 60px;">
+                            <i class="fa-solid fa-user-doctor text-primary fs-2"></i>
+                        </div>
+                        <h6 class="font-outfit text-primary mb-1 fw-bold">Dr. {{ doctor.full_name }}</h6>
+                        <span class="badge bg-primary-glow text-primary mb-2 font-outfit small">Practitioner</span>
+                        <div class="small text-muted mb-2">{{ doctor.specialization }}</div>
+                        <div class="mt-3 p-2 bg-light rounded-3 border border-light text-start small">
+                            <h6 class="font-outfit text-primary fw-bold mb-2 small" style="font-size: 0.8rem;"><i class="fa-solid fa-calendar-day me-1 text-accent"></i> Availability</h6>
+                            {% if doctor.has_configured_availability %}
+                                {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                                    {% set ns = namespace(found=None) %}
+                                    {% for avail in doctor.availabilities %}
+                                        {% if avail.day == day %}
+                                            {% set ns.found = avail %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% set avail = ns.found %}
+                                    {% if avail %}
+                                        <div class="mb-2 pb-1 border-bottom border-light">
+                                            <strong>{{ day }}:</strong>
+                                            {% if not avail.available %}
+                                                <span class="text-danger small d-block ps-2">Not Available</span>
+                                            {% else %}
+                                                {% set mornText = "" %}
+                                                {% if avail.morning %}
+                                                    {% if avail.morning_start and avail.morning_end and avail.morning_start != "Available" and avail.morning_end != "Available" %}
+                                                        {% set mornText = "Morning: " ~ avail.morning_start ~ " – " ~ avail.morning_end %}
+                                                    {% else %}
+                                                        {% set mornText = "Morning: Available" %}
+                                                    {% endif %}
+                                                {% else %}
+                                                    {% set mornText = '<span class="text-danger">Morning: Not Available</span>' %}
+                                                {% endif %}
+
+                                                {% set aftText = "" %}
+                                                {% if avail.afternoon %}
+                                                    {% if avail.afternoon_start and avail.afternoon_end and avail.afternoon_start != "Available" and avail.afternoon_end != "Available" %}
+                                                        {% set aftText = "Afternoon: " ~ avail.afternoon_start ~ " – " ~ avail.afternoon_end %}
+                                                    {% else %}
+                                                        {% set aftText = "Afternoon: Available" %}
+                                                    {% endif %}
+                                                {% else %}
+                                                    {% set aftText = '<span class="text-danger">Afternoon: Not Available</span>' %}
+                                                {% endif %}
+
+                                                {% if avail.morning and avail.afternoon %}
+                                                    <span class="d-block ps-2 small text-muted-custom">{{ mornText | safe }}</span>
+                                                    <span class="d-block ps-2 small text-muted-custom">{{ aftText | safe }}</span>
+                                                {% elif avail.morning %}
+                                                    {% if avail.morning_start and avail.morning_end and avail.morning_start != "Available" and avail.morning_end != "Available" %}
+                                                        <span class="d-block ps-2 small text-muted-custom">{{ mornText | safe }}</span>
+                                                        <span class="d-block ps-2 small text-danger">Afternoon: Not Available</span>
+                                                    {% else %}
+                                                        <span class="d-block ps-2 small text-muted-custom">Morning Only</span>
+                                                    {% endif %}
+                                                {% elif avail.afternoon %}
+                                                    {% if avail.afternoon_start and avail.afternoon_end and avail.afternoon_start != "Available" and avail.afternoon_end != "Available" %}
+                                                        <span class="d-block ps-2 small text-danger">Morning: Not Available</span>
+                                                        <span class="d-block ps-2 small text-muted-custom">{{ aftText | safe }}</span>
+                                                    {% else %}
+                                                        <span class="d-block ps-2 small text-muted-custom">Afternoon Only</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="d-block ps-2 small text-danger">Not Available</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-muted small">Consultation availability has not been configured.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="nav flex-column">
+                        <a class="sidebar-nav-link active" href="{{ url_for('main.doctor_dashboard') }}">
+                            <i class="fa-solid fa-gauge-high"></i> Dashboard
+                        </a>
+                        <a class="sidebar-nav-link" href="{{ url_for('main.doctor_patient_directory') }}">
+                            <i class="fa-solid fa-users"></i> Patient Directory
+                        </a>
+                        <a href="{{ url_for('main.logout') }}" class="sidebar-nav-link text-danger mt-3 pt-3 border-top border-light">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Content Panel -->
+            <div class="col-lg-9">
+                <!-- Welcome Message Header Banner -->
+                <div class="dashboard-header-banner p-4 bg-light rounded-4 border border-light shadow-sm mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <span class="badge bg-primary-glow text-primary mb-2 font-outfit small">Doctor Workspace</span>
+                            <h1 class="h2 font-outfit text-primary fw-bold mb-1">Welcome back, Dr. {{ doctor.full_name }}</h1>
+                            <p class="text-muted-custom mb-0 small">
+                                <i class="fa-solid fa-stethoscope me-1 text-accent"></i> Specialist in {{ doctor.specialization }} | License: {{ doctor.license_number }}
+                            </p>
+                            <p class="text-muted-custom mb-0 mt-1 small">
+                                <i class="fa-regular fa-calendar-days me-1 text-accent"></i> Today is {{ datetime.now().strftime('%A, %B %d, %Y') }}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <div class="bg-white p-3 rounded-3 border border-light text-center shadow-sm d-inline-block" style="min-width: 120px;">
+                                <span class="d-block text-muted small">Today's Visits</span>
+                                <span class="h4 text-primary fw-bold mb-0">{{ today_appointments_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Stat Cards -->
+                <div class="row g-4 mb-4">
+                    <!-- Today's Appointments -->
+                    <div class="col-md-4">
+                        <div class="glass-card p-4 border border-light shadow-sm text-center card-hover-scale">
+                            <div class="bg-primary-glow mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 55px; height: 55px;">
+                                <i class="fa-solid fa-calendar-day text-primary fs-4"></i>
+                            </div>
+                            <h6 class="text-muted small mb-1 uppercase font-outfit">Today's Appointments</h6>
+                            <h3 class="fw-bold text-primary mb-0">{{ today_appointments_count }}</h3>
+                        </div>
+                    </div>
+                    <!-- Total Patients -->
+                    <div class="col-md-4">
+                        <div class="glass-card p-4 border border-light shadow-sm text-center card-hover-scale">
+                            <div class="bg-accent-glow mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 55px; height: 55px;">
+                                <i class="fa-solid fa-hospital-user text-accent fs-4"></i>
+                            </div>
+                            <h6 class="text-muted small mb-1 uppercase font-outfit">Total Patients</h6>
+                            <h3 class="fw-bold text-accent mb-0">{{ total_patients_count }}</h3>
+                        </div>
+                    </div>
+                    <!-- Pending Consultations -->
+                    <div class="col-md-4">
+                        <div class="glass-card p-4 border border-light shadow-sm text-center card-hover-scale">
+                            <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 55px; height: 55px; background-color: rgba(245, 158, 11, 0.07); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.15);">
+                                <i class="fa-solid fa-hourglass-half fs-4"></i>
+                            </div>
+                            <h6 class="text-muted small mb-1 uppercase font-outfit">Pending Consultations</h6>
+                            <h3 class="fw-bold mb-0" style="color: #d97706;">{{ pending_consultations_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Today's Appointments Table -->
+                    <div class="col-xl-8">
+                        <div class="glass-card p-4 border border-light shadow-sm h-100">
+                            <h5 class="font-outfit text-primary mb-4 d-flex align-items-center">
+                                <i class="fa-solid fa-list-check text-accent me-2"></i> Today's Schedule
+                            </h5>
+                            
+                            {% if today_appointments %}
+                                <div class="mb-4">
+                                    <h6 class="font-outfit text-primary fw-bold mb-3 border-bottom pb-1"><i class="fa-solid fa-sun text-warning me-1"></i> Today's Morning Patients</h6>
+                                    {% if morning_appointments %}
+                                        <div class="table-responsive mb-3">
+                                            <table class="table table-hover align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th style="width: 45%">Patient</th>
+                                                        <th style="width: 35%">Reason</th>
+                                                        <th style="width: 20%" class="text-end">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for app in morning_appointments %}
+                                                        <tr>
+                                                            <td>
+                                                                <div class="fw-bold text-primary-light">
+                                                                    <a href="{{ url_for('main.patient_record', patient_id=app.patient.id) }}" class="text-primary-light hover-accent text-decoration-none">{{ app.patient.full_name }}</a>
+                                                                </div>
+                                                                <span class="small text-muted">{{ app.patient.email }}</span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="text-muted small d-inline-block text-truncate" style="max-width: 200px;" title="{{ app.reason or 'No reason provided' }}">
+                                                                    {{ app.reason or 'No reason provided' }}
+                                                                </span>
+                                                            </td>
+                                                            <td class="text-end">
+                                                                {% if app.status in ['Approved'] %}
+                                                                    <a href="{{ url_for('main.consultation', appointment_id=app.id) }}" class="btn btn-premium btn-sm py-1 px-2 font-outfit">
+                                                                        <i class="fa-solid fa-file-prescription me-1"></i> Consult
+                                                                    </a>
+                                                                {% elif app.status == 'Completed' %}
+                                                                    {% if app.consultation %}
+                                                                        <button class="btn btn-outline-premium btn-sm py-1 px-2 font-outfit"
+                                                                                data-bs-toggle="modal"
+                                                                                data-bs-target="#viewConsultationModal"
+                                                                                data-patient-name="{{ app.patient.full_name }}"
+                                                                                data-symptoms="{{ app.consultation.symptoms or 'Not recorded' }}"
+                                                                                data-diagnosis="{{ app.consultation.diagnosis }}"
+                                                                                data-prescription="{{ app.consultation.prescription or 'Not recorded' }}"
+                                                                                data-notes="{{ app.consultation.notes or 'Not recorded' }}"
+                                                                                data-ai-summary="{{ app.consultation.ai_summary or '' }}">
+                                                                            <i class="fa-solid fa-eye me-1"></i> View Details
+                                                                        </button>
+                                                                    {% else %}
+                                                                        <span class="text-success small fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Completed</span>
+                                                                    {% endif %}
+                                                                {% else %}
+                                                                    <span class="text-muted small">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted small italic ms-3">No morning appointments scheduled.</p>
+                                    {% endif %}
+                                </div>
+
+                                <div>
+                                    <h6 class="font-outfit text-primary fw-bold mb-3 border-bottom pb-1"><i class="fa-solid fa-moon text-accent me-1"></i> Today's Afternoon Patients</h6>
+                                    {% if afternoon_appointments %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th style="width: 45%">Patient</th>
+                                                        <th style="width: 35%">Reason</th>
+                                                        <th style="width: 20%" class="text-end">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for app in afternoon_appointments %}
+                                                        <tr>
+                                                            <td>
+                                                                <div class="fw-bold text-primary-light">
+                                                                    <a href="{{ url_for('main.patient_record', patient_id=app.patient.id) }}" class="text-primary-light hover-accent text-decoration-none">{{ app.patient.full_name }}</a>
+                                                                </div>
+                                                                <span class="small text-muted">{{ app.patient.email }}</span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="text-muted small d-inline-block text-truncate" style="max-width: 200px;" title="{{ app.reason or 'No reason provided' }}">
+                                                                    {{ app.reason or 'No reason provided' }}
+                                                                </span>
+                                                            </td>
+                                                            <td class="text-end">
+                                                                {% if app.status in ['Approved'] %}
+                                                                    <a href="{{ url_for('main.consultation', appointment_id=app.id) }}" class="btn btn-premium btn-sm py-1 px-2 font-outfit">
+                                                                        <i class="fa-solid fa-file-prescription me-1"></i> Consult
+                                                                    </a>
+                                                                {% elif app.status == 'Completed' %}
+                                                                    {% if app.consultation %}
+                                                                        <button class="btn btn-outline-premium btn-sm py-1 px-2 font-outfit"
+                                                                                data-bs-toggle="modal"
+                                                                                data-bs-target="#viewConsultationModal"
+                                                                                data-patient-name="{{ app.patient.full_name }}"
+                                                                                data-symptoms="{{ app.consultation.symptoms or 'Not recorded' }}"
+                                                                                data-diagnosis="{{ app.consultation.diagnosis }}"
+                                                                                data-prescription="{{ app.consultation.prescription or 'Not recorded' }}"
+                                                                                data-notes="{{ app.consultation.notes or 'Not recorded' }}"
+                                                                                data-ai-summary="{{ app.consultation.ai_summary or '' }}">
+                                                                            <i class="fa-solid fa-eye me-1"></i> View Details
+                                                                        </button>
+                                                                    {% else %}
+                                                                        <span class="text-success small fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Completed</span>
+                                                                    {% endif %}
+                                                                {% else %}
+                                                                    <span class="text-muted small">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted small italic ms-3">No afternoon appointments scheduled.</p>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5 text-muted animate-fade-in">
+                                    <i class="fa-regular fa-calendar-times fs-2 text-light mb-3"></i>
+                                    <h6 class="font-outfit text-muted">No appointments scheduled.</h6>
+                                    <p class="small mb-0">All schedules have been completed or cancelled.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Activity Timeline Column -->
+                    <div class="col-xl-4">
+                        <div class="glass-card p-4 border border-light shadow-sm h-100">
+                            <h5 class="font-outfit text-primary mb-4 d-flex align-items-center">
+                                <i class="fa-solid fa-clock-rotate-left text-accent me-2"></i> Clinical Activities
+                            </h5>
+                            {% if recent_activities %}
+                                <div class="activity-timeline">
+                                    {% for act in recent_activities %}
+                                        <div class="activity-timeline-item">
+                                            <div class="activity-timeline-marker {% if act.status == 'Completed' %}bg-consultation{% else %}bg-appointment{% endif %}"></div>
+                                            <h6 class="font-outfit text-primary small fw-bold mb-1">
+                                                {% if act.status == 'Completed' %}
+                                                    Consultation Done
+                                                {% else %}
+                                                    Appointment: {{ act.status }}
+                                                {% endif %}
+                                            </h6>
+                                            <p class="small text-dark mb-0">Patient: <strong>{{ act.patient.full_name }}</strong></p>
+                                             <span class="small text-muted" style="font-size: 0.75rem;">
+                                                 {% if act.status == 'Completed' and act.consultation %}
+                                                     {{ act.consultation.consultation_date | format_ist }}
+                                                 {% elif act.status == 'Approved' and act.approved_at %}
+                                                     {{ act.approved_at | format_ist }}
+                                                 {% elif act.status == 'Cancelled' and act.cancelled_at %}
+                                                     {{ act.cancelled_at | format_ist }}
+                                                 {% else %}
+                                                     {{ act.appointment_date | format_ist }}
+                                                 {% endif %}
+                                             </span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-clock fs-2 text-light mb-3"></i>
+                                    <p class="small mb-0">No activities logged yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- View Consultation Modal -->
+<div class="modal fade" id="viewConsultationModal" tabindex="-1" aria-labelledby="viewConsultationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient bg-teal text-white py-3 border-0 rounded-top-4" style="background-color: var(--accent) !important;">
+                <h5 class="modal-title font-outfit fw-bold text-white" id="viewConsultationModalLabel">Consultation Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <h6 class="text-primary fw-bold font-outfit border-bottom border-light pb-2 mb-3">Patient Name: <span class="text-dark fw-normal" id="viewPatientName"></span></h6>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-primary">Symptoms Observed</label>
+                        <div class="p-3 bg-light rounded border border-light" id="viewSymptoms" style="white-space: pre-wrap;"></div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-primary">Diagnosis</label>
+                        <div class="p-3 bg-light rounded border border-light fw-bold text-dark" id="viewDiagnosis" style="white-space: pre-wrap;"></div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-primary">Prescription</label>
+                        <div class="p-3 bg-light rounded border border-light" id="viewPrescription" style="white-space: pre-wrap;"></div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-primary">Notes</label>
+                        <div class="p-3 bg-light rounded border border-light" id="viewNotes" style="white-space: pre-wrap;"></div>
+                    </div>
+                    <div class="col-12 d-none" id="viewAiSummarySection">
+                        <label class="form-label small fw-semibold text-primary"><i class="fa-solid fa-microchip text-accent me-1"></i> AI Summary</label>
+                        <div class="p-3 bg-light rounded border border-light small font-monospace" id="viewAiSummary" style="white-space: pre-wrap; background-color: rgba(30, 58, 138, 0.02) !important;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const viewConsultationModal = document.getElementById('viewConsultationModal');
+    if (viewConsultationModal) {
+        viewConsultationModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const patientName = button.getAttribute('data-patient-name');
+            const symptoms = button.getAttribute('data-symptoms');
+            const diagnosis = button.getAttribute('data-diagnosis');
+            const prescription = button.getAttribute('data-prescription');
+            const notes = button.getAttribute('data-notes');
+            const aiSummary = button.getAttribute('data-ai-summary');
+            
+            viewConsultationModal.querySelector('#viewPatientName').textContent = patientName;
+            viewConsultationModal.querySelector('#viewSymptoms').textContent = symptoms;
+            viewConsultationModal.querySelector('#viewDiagnosis').textContent = diagnosis;
+            viewConsultationModal.querySelector('#viewPrescription').textContent = prescription;
+            viewConsultationModal.querySelector('#viewNotes').textContent = notes;
+            
+            const aiSection = viewConsultationModal.querySelector('#viewAiSummarySection');
+            const aiText = viewConsultationModal.querySelector('#viewAiSummary');
+            if (aiSummary && aiSummary.trim() !== '') {
+                aiText.textContent = aiSummary;
+                aiSection.classList.remove('d-none');
+            } else {
+                aiSection.classList.add('d-none');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

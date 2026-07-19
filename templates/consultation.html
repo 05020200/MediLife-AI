@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+
+{% block title %}Clinical Consultation - MediLife AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .consultation-header {
+        background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(13, 148, 136, 0.05) 100%);
+        border: 1px solid rgba(30, 58, 138, 0.1);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .timeline-history {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .timeline-history::before {
+        content: "";
+        position: absolute;
+        left: 0.75rem;
+        top: 0.25rem;
+        bottom: 0.25rem;
+        width: 2px;
+        background-color: rgba(30, 58, 138, 0.1);
+    }
+
+    .timeline-history-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-history-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .timeline-history-dot {
+        position: absolute;
+        left: -1.6rem;
+        top: 0.25rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--accent);
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+    }
+
+    .ai-loading-spinner {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="consultation-section py-4 my-3 animate-fade-in">
+    <div class="container">
+
+        <!-- Breadcrumb & Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{{ url_for('main.doctor_dashboard') }}" class="btn btn-outline-premium btn-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+            <span class="badge bg-primary-glow text-primary font-outfit px-3 py-2 fs-6">Clinical Session</span>
+        </div>
+
+        <div class="consultation-header">
+            <div class="row align-items-center">
+                <div class="col-md-9">
+                    <h1 class="h3 font-outfit text-primary fw-bold mb-1">New Patient Consultation</h1>
+                    <p class="text-muted-custom mb-0 small">
+                        <i class="fa-solid fa-user-doctor me-1 text-accent"></i> Attending Practitioner: Dr. {{
+                        doctor.full_name }}
+                    </p>
+                </div>
+                <div class="col-md-3 text-md-end mt-2 mt-md-0">
+                    <span class="small text-muted"><i class="fa-regular fa-clock me-1"></i> Session: {{
+                        (datetime.utcnow() | to_ist).strftime('%I:%M %p').lstrip('0') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Column: Patient Profile & Clinical History -->
+            <div class="col-lg-5">
+                <!-- Patient Info Card -->
+                <div class="glass-card p-4 border border-light shadow-sm mb-4">
+                    <h5 class="font-outfit text-primary mb-3 pb-2 border-bottom border-light">
+                        <i class="fa-solid fa-id-card text-accent me-2"></i> Patient Information
+                    </h5>
+
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar-wrapper bg-primary-glow d-flex align-items-center justify-content-center rounded-circle me-3"
+                            style="width: 50px; height: 50px;">
+                            <i class="fa-solid fa-circle-user text-primary fs-3"></i>
+                        </div>
+                        <div>
+                            <h6 class="font-outfit fw-bold text-primary mb-0">
+                                <a href="{{ url_for('main.patient_record', patient_id=patient.id) }}" target="_blank"
+                                    class="text-primary hover-accent text-decoration-none">
+                                    {{ patient.full_name }} <i
+                                        class="fa-solid fa-up-right-from-square small ms-1 text-accent"
+                                        style="font-size: 0.75rem;"></i>
+                                </a>
+                            </h6>
+                            <span class="small text-muted">{{ patient.email }}</span>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 small">
+                        <div class="col-6">
+                            <strong class="text-primary-light">Age:</strong> {{ ((datetime.now().date() -
+                            patient.date_of_birth).days / 365.25)|int }} years
+                        </div>
+                        <div class="col-6">
+                            <strong class="text-primary-light">Gender:</strong> {{ patient.gender }}
+                        </div>
+                        <div class="col-6">
+                            <strong class="text-primary-light">DOB:</strong> {{ patient.date_of_birth.strftime('%b %d,
+                            %Y') }}
+                        </div>
+                        <div class="col-6">
+                            <strong class="text-primary-light">Blood Group:</strong> {{ patient.blood_group or 'Not
+                            Specified' }}
+                        </div>
+                        <div class="col-12 mt-2 pt-2 border-top border-light">
+                            <strong class="text-primary-light"><i class="fa-solid fa-phone me-1 small"></i>
+                                Phone:</strong> {{ patient.phone or 'Not Provided' }}
+                        </div>
+                        <div class="col-12">
+                            <strong class="text-primary-light"><i class="fa-solid fa-location-dot me-1 small"></i>
+                                Address:</strong> {{ patient.address or 'Not Provided' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clinical History (Past Visits) -->
+                <div class="glass-card p-4 border border-light shadow-sm">
+                    <h5 class="font-outfit text-primary mb-3 pb-2 border-bottom border-light">
+                        <i class="fa-solid fa-notes-medical text-accent me-2"></i> Clinical History
+                    </h5>
+
+                    <!-- Action buttons -->
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="button" class="btn btn-premium text-white btn-sm flex-fill" id="btnViewOriginal">
+                            <i class="fa-solid fa-clock-rotate-left me-1"></i> View Original Records
+                        </button>
+                        <button type="button" class="btn btn-outline-premium btn-sm flex-fill" id="btnGenPrevSummary">
+                            <span class="normal-state">
+                                <i class="fa-solid fa-microchip me-1"></i> Generate Previous Records Summary
+                            </span>
+                            <span class="loading-state d-none">
+                                <i class="fa-solid fa-spinner fa-spin me-1"></i> Compiling...
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Original Records Section -->
+                    <div id="originalRecordsSection">
+                        {% if past_consultations %}
+                        <div class="timeline-history pt-2">
+                            {% for consult in past_consultations %}
+                            <div class="timeline-history-item">
+                                <div class="timeline-history-dot"></div>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small fw-bold text-primary">{{ (consult.consultation_date |
+                                        to_ist).strftime('%B %d, %Y') }}</span>
+                                    <span class="small text-muted">Dr. {{ consult.doctor.last_name }}</span>
+                                </div>
+                                <div class="p-2 bg-light rounded border border-light small">
+                                    <div class="mb-1"><strong class="text-primary-light">Diagnosis:</strong> {{
+                                        consult.diagnosis }}</div>
+                                    {% if consult.prescription %}
+                                    <div><strong class="text-primary-light">Rx:</strong> {{ consult.prescription }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4 text-muted small">
+                            <i class="fa-solid fa-folder-open fs-3 text-light mb-2"></i>
+                            <p class="mb-0">No past clinical consultation history recorded.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- AI Summary of Previous Records Section -->
+                    <div id="aiPreviousSummarySection" class="d-none">
+                        <h6 class="font-outfit text-primary mb-2 small fw-bold">
+                            <i class="fa-solid fa-microchip text-accent me-1"></i> AI Summary of Previous Records
+                        </h6>
+                        <div class="p-3 bg-light rounded border border-light font-monospace small mb-2 text-dark"
+                            id="aiPreviousSummaryText"
+                            style="white-space: pre-wrap; background-color: rgba(30, 58, 138, 0.02) !important; line-height: 1.5; min-height: 80px;">
+                            No summary generated yet.</div>
+                        <div class="disclaimer-badge"
+                            style="font-size: 0.75rem; background-color: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); color: #b45309; border-radius: 8px; padding: 0.75rem 1rem;">
+                            <div class="d-flex align-items-start">
+                                <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
+                                <div>
+                                    Disclaimer: This summary is generated using only previous consultation records and
+                                    is intended for clinical reference. It does not include the current consultation.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Consultation Form -->
+            <div class="col-lg-7">
+                <div class="glass-card p-4 border border-light shadow-sm">
+                    <h5 class="font-outfit text-primary mb-4 pb-2 border-bottom border-light">
+                        <i class="fa-solid fa-file-waveform text-accent me-2"></i> Session Records
+                    </h5>
+
+                    <!-- Alert placeholder for status messages -->
+                    <div id="formAlert" class="alert d-none" role="alert"></div>
+
+                    <form id="clinicalConsultationForm" method="POST"
+                        action="{{ url_for('main.consultation', appointment_id=appointment.id) }}">
+                        <!-- Symptoms Observed -->
+                        <div class="mb-3">
+                            <label for="symptoms" class="form-label small fw-semibold text-primary">Symptoms</label>
+                            <textarea class="form-control" id="symptoms" name="symptoms" rows="3"
+                                placeholder="Enter patient reported symptoms and observations...">{{ appointment.reason or '' }}</textarea>
+                        </div>
+
+                        <!-- Diagnosis -->
+                        <div class="mb-3">
+                            <label for="diagnosis" class="form-label small fw-semibold text-primary">Diagnosis <span
+                                    class="text-danger">*</span></label>
+                            <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3"
+                                placeholder="Enter clinical assessment, diagnostic conclusions (required)..."
+                                required></textarea>
+                        </div>
+
+                        <!-- Prescription -->
+                        <div class="mb-3">
+                            <label for="prescription"
+                                class="form-label small fw-semibold text-primary">Prescription</label>
+                            <textarea class="form-control" id="prescription" name="prescription" rows="3"
+                                placeholder="List medications, dosage instructions, and schedules..."></textarea>
+                        </div>
+
+                        <!-- Consultation Notes -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label small fw-semibold text-primary">Consultation
+                                Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4"
+                                placeholder="Additional treatment guidelines, follow-up schedules, or lifestyle advice..."></textarea>
+                        </div>
+
+                        <!-- Hidden input to store generated AI summary -->
+                        <input type="hidden" id="aiSummaryInput" name="ai_summary">
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-end align-items-center pt-3 border-top border-light">
+                            <button type="submit" class="btn btn-premium btn-sm text-white">
+                                Save Consultation <i class="fa-solid fa-floppy-disk ms-1"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- View Original Records Modal -->
+<div class="modal fade" id="originalRecordsModal" tabindex="-1" aria-labelledby="originalRecordsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient bg-primary text-white py-3 border-0 rounded-top-4">
+                <h5 class="modal-title font-outfit fw-bold text-white" id="originalRecordsModalLabel">
+                    <i class="fa-solid fa-folder-open me-2"></i> Historical Consultation Notes Feed
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+
+                {% if past_consultations %}
+                <div class="row g-3">
+                    {% for consult in past_consultations %}
+                    <div class="col-12">
+                        <div class="bg-white p-4 rounded-3 shadow-sm border border-light">
+                            <div
+                                class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-light">
+                                <div>
+                                    <h6 class="fw-bold text-primary mb-0 font-outfit">Consultation on {{
+                                        consult.consultation_date | format_ist }}</h6>
+                                    <span class="small text-muted">Conducted by: Dr. {{ consult.doctor.first_name }} {{
+                                        consult.doctor.last_name }} ({{ consult.doctor.specialization }})</span>
+                                </div>
+                                <span class="badge bg-success-glow text-success font-sans">{{ consult.diagnosis
+                                    }}</span>
+                            </div>
+
+                            <div class="row g-3 small text-dark">
+                                <div class="col-md-6">
+                                    <strong class="text-primary-light d-block mb-1"><i
+                                            class="fa-solid fa-stethoscope me-1 text-accent"></i> Presented
+                                        Symptoms</strong>
+                                    <div class="p-2 bg-light rounded border border-light"
+                                        style="white-space: pre-wrap;">{{ consult.symptoms or 'No symptoms recorded.' }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong class="text-primary-light d-block mb-1"><i
+                                            class="fa-solid fa-prescription-bottle-medical me-1 text-success"></i>
+                                        Prescription & Rx</strong>
+                                    <div class="p-2 bg-light rounded border border-light"
+                                        style="white-space: pre-wrap;">{{ consult.prescription or 'No medications
+                                        prescribed.' }}</div>
+                                </div>
+                                <div class="col-12">
+                                    <strong class="text-primary-light d-block mb-1"><i
+                                            class="fa-regular fa-comment-dots me-1 text-primary-light"></i> Attending
+                                        Physician Notes</strong>
+                                    <div class="p-3 bg-light rounded border border-light font-sans"
+                                        style="white-space: pre-wrap; font-style: italic;">{{ consult.notes or 'No
+                                        specific notes recorded.' }}</div>
+                                </div>
+                                <div class="col-12 mt-3 pt-3 border-top border-light">
+                                    <strong class="text-primary-light d-block mb-2"><i
+                                            class="fa-solid fa-file-medical text-primary me-1"></i> Uploaded Medical
+                                        Documents</strong>
+                                    {% if consult.reports %}
+                                    <div class="list-group">
+                                        {% for report in consult.reports %}
+                                        <div
+                                            class="list-group-item d-flex justify-content-between align-items-center small py-2 bg-light border-light rounded mb-1">
+                                            <div class="d-flex flex-column text-dark">
+                                                <span class="fw-semibold"><i
+                                                        class="fa-solid fa-file-invoice text-primary me-2"></i>{{
+                                                    report.file_name }}</span>
+                                                <span class="text-muted" style="font-size: 0.75rem;">Type: {{
+                                                    report.report_type }} | Uploaded: {{ (report.uploaded_at |
+                                                    to_ist).strftime('%B %d, %Y') }}</span>
+                                            </div>
+                                            <a href="{{ url_for('main.download_report', report_id=report.id) }}"
+                                                class="btn btn-outline-premium btn-xs text-primary-light"
+                                                target="_blank">
+                                                <i class="fa-solid fa-eye me-1"></i> View
+                                            </a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted italic mb-0 small">No medical documents were uploaded during
+                                        this consultation.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-folder-open fs-2 text-light mb-3"></i>
+                    <h6>No historical original consultations found.</h6>
+                </div>
+                {% endif %}
+
+            </div>
+            <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close
+                    Feed</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const aiSummaryInput = document.getElementById('aiSummaryInput');
+        const formAlert = document.getElementById('formAlert');
+
+        const btnViewOriginal = document.getElementById('btnViewOriginal');
+        const btnGenPrevSummary = document.getElementById('btnGenPrevSummary');
+        const originalRecordsSection = document.getElementById('originalRecordsSection');
+        const aiPreviousSummarySection = document.getElementById('aiPreviousSummarySection');
+        const aiPreviousSummaryText = document.getElementById('aiPreviousSummaryText');
+
+        if (btnViewOriginal) {
+            btnViewOriginal.addEventListener('click', function () {
+                // Trigger the Historical Consultation Notes Feed modal popup inline
+                const originalRecordsModal = new bootstrap.Modal(document.getElementById('originalRecordsModal'));
+                originalRecordsModal.show();
+
+                // Maintain inline timeline toggles and active button states as before
+                originalRecordsSection.classList.remove('d-none');
+                aiPreviousSummarySection.classList.add('d-none');
+
+                btnViewOriginal.className = "btn btn-premium text-white btn-sm flex-fill";
+                btnGenPrevSummary.className = "btn btn-outline-premium btn-sm flex-fill";
+            });
+        }
+
+        if (btnGenPrevSummary) {
+            btnGenPrevSummary.addEventListener('click', function () {
+                originalRecordsSection.classList.add('d-none');
+                aiPreviousSummarySection.classList.remove('d-none');
+
+                btnViewOriginal.className = "btn btn-outline-premium btn-sm flex-fill";
+                btnGenPrevSummary.className = "btn btn-premium text-white btn-sm flex-fill";
+
+                togglePrevButtonLoading(true);
+                hideAlert();
+
+                fetch('/api/generate-summary', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appointment_id: {{ appointment.id }},
+                        previous_only: true
+                    })
+                })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { throw new Error(data.error || 'Request failed') });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.summary) {
+                aiPreviousSummaryText.textContent = data.summary;
+                aiSummaryInput.value = data.summary;
+                showAlert('success', 'AI Summary of Previous Records compiled successfully!');
+            }
+        })
+        .catch(error => {
+            console.error('Error generating previous summary:', error);
+            showAlert('danger', 'Failed to generate summary: ' + error.message);
+            aiPreviousSummaryText.textContent = 'Error: ' + error.message;
+        })
+        .finally(() => {
+            togglePrevButtonLoading(false);
+        });
+        });
+    }
+
+    function togglePrevButtonLoading(isLoading) {
+        const normalState = btnGenPrevSummary.querySelector('.normal-state');
+        const loadingState = btnGenPrevSummary.querySelector('.loading-state');
+
+        if (isLoading) {
+            btnGenPrevSummary.disabled = true;
+            normalState.classList.add('d-none');
+            loadingState.classList.remove('d-none');
+        } else {
+            btnGenPrevSummary.disabled = false;
+            normalState.classList.remove('d-none');
+            loadingState.classList.add('d-none');
+        }
+    }
+
+    function showAlert(type, message) {
+        formAlert.className = `alert alert-${type} mb-3 alert-dismissible fade show`;
+        formAlert.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fa-solid fa-circle-info me-2"></i>
+                <div>${message}</div>
+            </div>
+        `;
+        formAlert.classList.remove('d-none');
+    }
+
+    function hideAlert() {
+        formAlert.classList.add('d-none');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Registration - MediLife AI{% endblock %}
+
+{% block content %}
+<section class="register-section py-5 d-flex align-items-center" style="min-height: 90vh;">
+    <div class="container my-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-7 col-md-10">
+                <div class="glass-card p-5 border border-primary-subtle rounded-4 shadow-lg animate-on-scroll appear">
+                    <div class="text-center mb-4">
+                        <div class="brand-icon-wrapper mx-auto mb-3 bg-primary-glow">
+                            <i class="fa-solid fa-user-plus brand-icon text-primary fs-3 animate-pulse"></i>
+                        </div>
+                        <h2 class="h3 font-outfit text-primary fw-bold">Patient Registration</h2>
+                        <p class="small text-muted-custom">Create your secure electronic health profile</p>
+                    </div>
+                    
+                    <!-- Progress Step Wizard -->
+                    <div class="reg-step-wizard">
+                        <div class="reg-wizard-dot active" id="dotStep1" title="Account Credentials">1</div>
+                        <div class="reg-wizard-dot active" id="dotStep2" title="Demographics">2</div>
+                        <div class="reg-wizard-dot active" id="dotStep3" title="Security & Consent">3</div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('main.register') }}" class="custom-form">
+                        <!-- Section 1: Account Info -->
+                        <div class="border-bottom border-light pb-4 mb-4">
+                            <h5 class="font-outfit text-primary fw-bold mb-3"><i class="fa-solid fa-address-card me-2 text-accent"></i> 1. Contact Information</h5>
+                            
+                            <!-- Name Grid -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="regFirstName" class="form-label small fw-semibold text-primary">First Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-user text-primary"></i></span>
+                                        <input type="text" class="form-control border-start-0 bg-white" id="regFirstName" name="first_name" placeholder="First name" autocomplete="off" required maxlength="50">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="regLastName" class="form-label small fw-semibold text-primary">Last Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-user text-primary"></i></span>
+                                        <input type="text" class="form-control border-start-0 bg-white" id="regLastName" name="last_name" placeholder="Last name" autocomplete="off" required maxlength="50">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Contact Grid -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="regPhone" class="form-label small fw-semibold text-primary">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-phone text-primary"></i></span>
+                                        <input type="tel" class="form-control border-start-0 bg-white" id="regPhone" name="phone" placeholder="e.g. +15550192" pattern="^\+?[0-9\s\-]{7,18}$" title="Please enter a valid phone number (digits, spaces, hyphens, optional '+' prefix)" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="regEmail" class="form-label small fw-semibold text-primary">Email Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-envelope text-primary"></i></span>
+                                        <input type="email" class="form-control border-start-0 bg-white" id="regEmail" name="email" placeholder="name@example.com" autocomplete="off" required maxlength="100">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 2: Demographics -->
+                        <div class="border-bottom border-light pb-4 mb-4">
+                            <h5 class="font-outfit text-primary fw-bold mb-3"><i class="fa-solid fa-venus-mars me-2 text-accent"></i> 2. Demographics</h5>
+                            
+                            <!-- DOB and Gender Grid -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="regDOB" class="form-label small fw-semibold text-primary">Date of Birth</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-calendar-days text-primary"></i></span>
+                                        <input type="date" class="form-control border-start-0 bg-white" id="regDOB" name="date_of_birth" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="regGender" class="form-label small fw-semibold text-primary">Gender</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-venus-mars text-primary"></i></span>
+                                        <select class="form-select border-start-0 bg-white" id="regGender" name="gender" required>
+                                            <option value="" disabled selected>Select gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 3: Credentials & Security -->
+                        <div class="mb-4">
+                            <h5 class="font-outfit text-primary fw-bold mb-3"><i class="fa-solid fa-lock me-2 text-accent"></i> 3. Portal Password & Consent</h5>
+                            
+                            <!-- Password Grid -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="regPassword" class="form-label small fw-semibold text-primary">Password</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-lock text-primary"></i></span>
+                                        <input type="password" class="form-control border-start-0 bg-white" id="regPassword" name="password" placeholder="Min. 6 characters" autocomplete="new-password" required minlength="6">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="regConfirmPassword" class="form-label small fw-semibold text-primary">Confirm Password</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-lock text-primary"></i></span>
+                                        <input type="password" class="form-control border-start-0 bg-white" id="regConfirmPassword" name="confirm_password" placeholder="Re-enter password" autocomplete="new-password" required minlength="6">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Terms consent -->
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input text-primary" id="regTerms" required>
+                                <label class="form-check-label small text-muted-custom" for="regTerms">I consent to secure digital health data processing and agree to terms.</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-premium w-100 text-white py-2 mb-3">Create Profile <i class="fa-solid fa-user-plus ms-1"></i></button>
+                    </form>
+                    
+                    <div class="text-center mt-3 pt-3 border-top border-light">
+                        <span class="small text-muted-custom">Already have an account? <a href="{{ url_for('main.login') }}" class="text-accent text-decoration-none fw-bold">Sign In</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

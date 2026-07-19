@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard - MediLife AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard specific styling */
+    .dashboard-header-banner {
+        background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(13, 148, 136, 0.05) 100%);
+        border: 1px solid rgba(30, 58, 138, 0.1);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .nav-pills .nav-link {
+        color: var(--text-muted);
+        font-family: var(--font-heading);
+        font-weight: 500;
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        transition: var(--transition-smooth);
+        margin-bottom: 0.5rem;
+        text-align: left;
+    }
+    
+    .nav-pills .nav-link:hover {
+        background-color: rgba(30, 58, 138, 0.05);
+        color: var(--primary);
+    }
+    
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);
+    }
+    
+    .nav-pills .nav-link i {
+        width: 20px;
+    }
+    
+    .stat-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.35rem 0.65rem;
+        border-radius: 50rem;
+    }
+    
+    .badge-pending {
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #d97706;
+    }
+    
+    .badge-confirmed {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #059669;
+    }
+    
+    .badge-cancelled {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #dc2626;
+    }
+    
+    .badge-completed {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #2563eb;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 2.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-item::before {
+        content: "";
+        position: absolute;
+        left: 0.85rem;
+        top: 0.25rem;
+        bottom: -2.25rem;
+        width: 2px;
+        background-color: rgba(30, 58, 138, 0.1);
+    }
+    
+    .timeline-item:last-child::before {
+        display: none;
+    }
+    
+    .timeline-dot {
+        position: absolute;
+        left: 0.45rem;
+        top: 0.25rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        background-color: var(--accent);
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
+    }
+    
+    .quick-action-btn-card {
+        cursor: pointer;
+        transition: var(--transition-smooth);
+    }
+    
+    .quick-action-btn-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-medium);
+        border-color: var(--primary-light);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-section py-4 my-3">
+    <div class="container">
+        <!-- Welcome Message Header Banner -->
+        <div class="dashboard-header-banner animate-fade-in">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <span class="badge bg-primary-glow text-primary mb-2 font-outfit small">Patient Workspace</span>
+                    <h1 class="display-6 font-outfit text-primary fw-bold mb-1">Welcome back, {{ patient.full_name }}</h1>
+                    <p class="text-muted-custom mb-0 small">
+                        <i class="fa-regular fa-calendar-days me-1 text-accent"></i> Today is {{ datetime.now().strftime('%A, %B %d, %Y') }}
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="d-inline-flex gap-2">
+                        <div class="bg-white p-3 rounded-3 border border-light text-center shadow-sm" style="min-width: 100px;">
+                            <span class="d-block text-muted small">Appointments</span>
+                            <span class="h4 text-primary fw-bold mb-0">{{ all_appointments|length }}</span>
+                        </div>
+                        <div class="bg-white p-3 rounded-3 border border-light text-center shadow-sm" style="min-width: 100px;">
+                            <span class="d-block text-muted small">Consultations</span>
+                            <span class="h4 text-accent fw-bold mb-0">{{ consultations|length }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Sidebar Navigation -->
+            <div class="col-lg-3">
+                <div class="glass-card p-3 border border-primary-subtle rounded-4 sticky-top" style="top: 100px; z-index: 100;">
+                    <div class="text-center pb-3 mb-3 border-bottom border-light">
+                        <div class="avatar-wrapper mb-2 mx-auto d-flex align-items-center justify-content-center rounded-circle overflow-hidden" style="width: 80px; height: 80px; border: 3px solid var(--primary-light);">
+                            {% if patient.profile_photo %}
+                                <img src="/{{ patient.profile_photo }}" alt="Avatar" class="img-fluid w-100 h-100 object-fit-cover">
+                            {% else %}
+                                <i class="fa-solid fa-circle-user text-primary fs-1"></i>
+                            {% endif %}
+                        </div>
+                        <h6 class="font-outfit text-primary mb-0">{{ patient.full_name }}</h6>
+                        <span class="small text-muted">{{ patient.email }}</span>
+                    </div>
+                    
+                    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                        <button class="nav-link {% if active_tab == 'dashboard' %}active{% endif %}" id="v-pills-dashboard-tab" data-bs-toggle="pill" data-bs-target="#v-pills-dashboard" type="button" role="tab" aria-controls="v-pills-dashboard" aria-selected="{% if active_tab == 'dashboard' %}true{% else %}false{% endif %}">
+                            <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
+                        </button>
+                        <a class="nav-link" href="{{ url_for('main.book_appointment') }}">
+                            <i class="fa-solid fa-calendar-plus me-2"></i> Book Appointment
+                        </a>
+                        <a class="nav-link" href="{{ url_for('main.appointment_history') }}">
+                            <i class="fa-solid fa-clock-rotate-left me-2"></i> Appointment History
+                        </a>
+                        <a class="nav-link" href="{{ url_for('main.medical_history') }}">
+                            <i class="fa-solid fa-file-medical me-2"></i> Medical History
+                        </a>
+                        <button class="nav-link {% if active_tab == 'profile' %}active{% endif %}" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="{% if active_tab == 'profile' %}true{% else %}false{% endif %}">
+                            <i class="fa-solid fa-user-gear me-2"></i> Profile Settings
+                        </button>
+                        <a href="{{ url_for('main.logout') }}" class="nav-link text-danger mt-3 pt-3 border-top border-light">
+                            <i class="fa-solid fa-right-from-bracket me-2"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="col-lg-9">
+                <div class="tab-content" id="v-pills-tabContent">
+                    
+                    <!-- Tab: Dashboard Overview -->
+                    <div class="tab-pane fade {% if active_tab == 'dashboard' %}show active{% endif %}" id="v-pills-dashboard" role="tabpanel" aria-labelledby="v-pills-dashboard-tab">
+                        <div class="row g-4">
+                            <!-- Column 1: Core content (Upcoming, Recent visits) -->
+                            <div class="col-md-8">
+                                <!-- Upcoming Appointment Card -->
+                                <div class="glass-card p-4 mb-4 border border-light shadow-sm">
+                                    <h5 class="font-outfit text-primary mb-3 d-flex align-items-center">
+                                        <i class="fa-solid fa-calendar-check text-accent me-2"></i> Upcoming Appointment
+                                    </h5>
+                                    
+                                    {% if upcoming_appointments %}
+                                        {% set next_app = upcoming_appointments[0] %}
+                                        <div class="p-3 bg-light rounded-3 border border-light">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h6 class="mb-1 text-primary fw-bold">Dr. {{ next_app.doctor.first_name }} {{ next_app.doctor.last_name }}</h6>
+                                                    <span class="small text-muted d-block">{{ next_app.doctor.specialization }}</span>
+                                                </div>
+                                                <span class="stat-badge {% if next_app.status == 'Pending Approval' %}badge-pending{% elif next_app.status == 'Approved' %}badge-confirmed{% elif next_app.status == 'Completed' %}badge-completed{% else %}badge-cancelled{% endif %}">
+                                                    {{ next_app.status }}
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="row mt-3 g-2 small border-top border-light pt-2 text-muted align-items-center">
+                                                <div class="col-sm-6">
+                                                    <i class="fa-regular fa-clock me-1 text-accent"></i> {{ (next_app.appointment_date | to_ist).strftime('%B %d, %Y') }} ({{ next_app.session }})
+                                                </div>
+                                                <div class="col-sm-6 text-sm-end">
+                                                    {% if next_app.status == 'Completed' or next_app.status == 'Cancelled' or next_app.consultation %}
+                                                        <button type="button" class="btn btn-outline-danger btn-xs" disabled>
+                                                            <i class="fa-solid fa-ban me-1"></i> Cancel Appointment
+                                                        </button>
+                                                    {% else %}
+                                                        <button type="button" class="btn btn-outline-danger btn-xs btn-cancel-appointment"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#cancelAppointmentModal"
+                                                                data-appointment-id="{{ next_app.id }}">
+                                                            <i class="fa-solid fa-ban me-1"></i> Cancel Appointment
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                                {% if next_app.reason %}
+                                                    <div class="col-12 mt-2">
+                                                        <strong class="text-primary-light">Reason:</strong> {{ next_app.reason }}
+                                                    </div>
+                                                {% endif %}
+                                                {% if next_app.status == 'Rejected' and next_app.rejection_reason %}
+                                                    <div class="col-12 mt-2 text-danger">
+                                                        <strong>Rejection Reason:</strong> {{ next_app.rejection_reason }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="fa-regular fa-calendar-minus fs-2 text-light mb-2"></i>
+                                            <p class="small mb-3">No upcoming appointments scheduled.</p>
+                                            <a href="{{ url_for('main.book_appointment') }}" class="btn btn-premium btn-sm text-white">Book Appointment Now</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Recent Visits Card -->
+                                <div class="glass-card p-4 border border-light shadow-sm">
+                                    <h5 class="font-outfit text-primary mb-3 d-flex align-items-center">
+                                        <i class="fa-solid fa-file-invoice text-accent me-2"></i> Recent Visits
+                                    </h5>
+                                    
+                                    {% if consultations %}
+                                        <div class="list-group list-group-flush">
+                                            {% for consult in consultations[:2] %}
+                                                <div class="list-group-item bg-transparent px-0 py-3 {% if not loop.last %}border-bottom border-light{% endif %}">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <h6 class="mb-0 text-primary fw-bold">Dr. {{ consult.doctor.first_name }} {{ consult.doctor.last_name }}</h6>
+                                                        <span class="small text-muted">{{ (consult.consultation_date | to_ist).strftime('%b %d, %Y') }}</span>
+                                                    </div>
+                                                    <span class="small text-muted d-block mb-2">{{ consult.doctor.specialization }}</span>
+                                                    
+                                                    <div class="bg-light p-2 rounded small">
+                                                        <strong class="text-primary-light">Diagnosis:</strong> {{ consult.diagnosis }}
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="text-end mt-3 border-top border-light pt-2">
+                                            <a href="{{ url_for('main.medical_history') }}" class="small text-accent text-decoration-none hover-accent">View all medical records <i class="fa-solid fa-arrow-right-long ms-1"></i></a>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="fa-solid fa-clipboard-question fs-2 text-light mb-2"></i>
+                                            <p class="small mb-0">No past clinical history recorded yet.</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Uploaded Medical Reports Card -->
+                                <div class="glass-card p-4 border border-light shadow-sm mt-4">
+                                    <h5 class="font-outfit text-primary mb-3 d-flex align-items-center">
+                                        <i class="fa-solid fa-file-shield text-accent me-2"></i> Uploaded Reports & Documents
+                                    </h5>
+                                    {% if patient.reports %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th scope="col" class="small text-primary fw-bold">Report Type</th>
+                                                        <th scope="col" class="small text-primary fw-bold">File Name</th>
+                                                        <th scope="col" class="small text-primary fw-bold">Uploaded Date</th>
+                                                        <th scope="col" class="small text-primary fw-bold text-center">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for report in patient.reports %}
+                                                        <tr>
+                                                            <td class="small fw-semibold text-primary">{{ report.report_type }}</td>
+                                                            <td class="small text-muted">{{ report.file_name }}</td>
+                                                            <td class="small text-muted">{{ report.uploaded_at | format_ist }}</td>
+                                                            <td class="small text-center">
+                                                                <a href="{{ url_for('main.download_report', report_id=report.id) }}" class="btn btn-outline-premium btn-xs" target="_blank">
+                                                                    <i class="fa-solid fa-download"></i> Download
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="fa-solid fa-folder-open fs-2 text-light mb-2"></i>
+                                            <p class="small mb-0">No medical reports uploaded yet.</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Column 2: Quick Actions & Notifications -->
+                            <div class="col-md-4">
+                                <!-- Notifications Card -->
+                                <div class="glass-card p-4 border border-light shadow-sm mb-4">
+                                    <h5 class="font-outfit text-primary mb-4 d-flex align-items-center">
+                                        <i class="fa-solid fa-bell text-accent me-2"></i> Notifications
+                                        {% if unread_notifications_count > 0 %}
+                                            <span class="badge bg-danger ms-auto rounded-pill" style="font-size: 0.75rem;">{{ unread_notifications_count }} new</span>
+                                        {% endif %}
+                                    </h5>
+                                    
+                                    {% if notifications %}
+                                        <div class="notifications-list animate-fade-in" style="max-height: 300px; overflow-y: auto;">
+                                            {% for notif in notifications %}
+                                                <div class="p-3 mb-2 rounded-3 border {% if not notif.is_read %}bg-primary-glow border-primary-subtle{% else %}bg-light border-light{% endif %}" style="font-size: 0.8rem;">
+                                                    <div class="d-flex justify-content-between align-items-start mb-1 gap-2">
+                                                        <strong class="text-primary">{{ notif.title or 'Alert' }}</strong>
+                                                        {% if not notif.is_read %}
+                                                            <form method="POST" action="{{ url_for('main.mark_notification_read', notification_id=notif.id) }}" style="display: inline-block;">
+                                                                <button type="submit" class="btn btn-link p-0 text-accent hover-accent text-decoration-none" style="font-size: 0.75rem;" title="Mark as read">
+                                                                    <i class="fa-solid fa-check-double"></i> Read
+                                                                </button>
+                                                            </form>
+                                                        {% endif %}
+                                                    </div>
+                                                    <p class="mb-1 text-dark">{{ notif.message }}</p>
+                                                    <span class="text-muted d-block" style="font-size: 0.7rem;">{{ (notif.created_at | to_ist).strftime('%b %d, %I:%M %p') }}</span>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="fa-regular fa-bell-slash fs-2 text-light mb-2"></i>
+                                            <p class="small mb-0">No notifications.</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="glass-card p-4 border border-light shadow-sm">
+                                    <h5 class="font-outfit text-primary mb-4 d-flex align-items-center">
+                                        <i class="fa-solid fa-star text-accent me-2"></i> Quick Actions
+                                    </h5>
+                                    
+                                    <div class="d-flex flex-column gap-3">
+                                        <div class="quick-action-btn-card p-3 border border-light rounded-3 bg-light" data-url="{{ url_for('main.book_appointment') }}" onclick="window.location.href=this.dataset.url;">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-primary-glow p-2 rounded text-primary">
+                                                    <i class="fa-solid fa-calendar-plus fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1 text-primary fw-bold small">Book Appointment</h6>
+                                                    <p class="mb-0 text-muted small" style="font-size: 0.75rem;">Schedule a slot with a doctor</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="quick-action-btn-card p-3 border border-light rounded-3 bg-light" data-url="{{ url_for('main.medical_history') }}" onclick="window.location.href=this.dataset.url;">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-accent-glow p-2 rounded text-accent">
+                                                    <i class="fa-solid fa-notes-medical fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1 text-primary fw-bold small">Medical History</h6>
+                                                    <p class="mb-0 text-muted small" style="font-size: 0.75rem;">Prescriptions & diagnoses</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="quick-action-btn-card p-3 border border-light rounded-3 bg-light" onclick="document.getElementById('v-pills-profile-tab').click();">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-success-glow p-2 rounded text-success">
+                                                    <i class="fa-solid fa-user-pen fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1 text-primary fw-bold small">Update Profile</h6>
+                                                    <p class="mb-0 text-muted small" style="font-size: 0.75rem;">Edit address, phone, dob</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info border-0 shadow-none mt-4 mb-0 small rounded-3">
+                                        <i class="fa-solid fa-shield-halved me-1 text-info"></i>
+                                        Your health data is securely encrypted under HIPAA privacy regulations.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+
+
+
+                    
+                    <!-- Tab: Profile Settings -->
+                    <div class="tab-pane fade {% if active_tab == 'profile' %}show active{% endif %}" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
+                        <div class="glass-card p-4 border border-light shadow-sm">
+                            <h5 class="font-outfit text-primary mb-3 d-flex align-items-center">
+                                <i class="fa-solid fa-user-gear text-accent me-2"></i> Profile Details
+                            </h5>
+                            <p class="small text-muted-custom mb-4">View or update your patient contact records, primary indicators, and emergency details.</p>
+                            
+                            <!-- Profile Photo Upload Form -->
+                            <form method="POST" action="{{ url_for('main.upload_profile_photo') }}" enctype="multipart/form-data" class="mb-4 pb-4 border-bottom border-light">
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-md-3 text-center">
+                                        <div class="avatar-wrapper mb-2 mx-auto d-flex align-items-center justify-content-center rounded-circle overflow-hidden" style="width: 80px; height: 80px; border: 3px solid var(--primary-light);">
+                                            {% if patient.profile_photo %}
+                                                <img src="/{{ patient.profile_photo }}" alt="Avatar" class="img-fluid w-100 h-100 object-fit-cover">
+                                            {% else %}
+                                                <i class="fa-solid fa-circle-user text-primary fs-1"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <label for="profilePhotoInput" class="form-label small fw-semibold text-primary">Upload Profile Photo</label>
+                                        <div class="input-group">
+                                            <input type="file" class="form-control form-control-sm" id="profilePhotoInput" name="profile_photo" accept="image/*" required>
+                                            <button class="btn btn-premium btn-sm text-white" type="submit">Upload Image</button>
+                                        </div>
+                                        <div class="form-text small text-muted">Supported formats: PNG, JPG, JPEG, GIF. Max size 2MB.</div>
+                                    </div>
+                                </div>
+                            </form>
+                            
+                            <form method="POST" action="{{ url_for('main.patient_dashboard') }}">
+                                <input type="hidden" name="action" value="update_profile">
+                                
+                                <div class="row g-3">
+                                    <!-- First Name -->
+                                    <div class="col-md-6">
+                                        <label for="profFirstName" class="form-label small fw-semibold text-primary">First Name</label>
+                                        <input type="text" class="form-control" id="profFirstName" name="first_name" value="{{ patient.first_name }}" required>
+                                    </div>
+                                    
+                                    <!-- Last Name -->
+                                    <div class="col-md-6">
+                                        <label for="profLastName" class="form-label small fw-semibold text-primary">Last Name</label>
+                                        <input type="text" class="form-control" id="profLastName" name="last_name" value="{{ patient.last_name }}" required>
+                                    </div>
+                                    
+                                    <!-- Email (Disabled) -->
+                                    <div class="col-md-6">
+                                        <label for="profEmail" class="form-label small fw-semibold text-primary">Email Address (Primary Identity)</label>
+                                        <input type="email" class="form-control text-muted" id="profEmail" value="{{ patient.email }}" disabled>
+                                    </div>
+                                    
+                                    <!-- Phone -->
+                                    <div class="col-md-6">
+                                        <label for="profPhone" class="form-label small fw-semibold text-primary">Phone Number</label>
+                                        <input type="tel" class="form-control" id="profPhone" name="phone" value="{{ patient.phone or '' }}" placeholder="e.g. +1 555-123-4567">
+                                    </div>
+                                    
+                                    <!-- Date of Birth -->
+                                    <div class="col-md-6">
+                                        <label for="profDOB" class="form-label small fw-semibold text-primary">Date of Birth</label>
+                                        <input type="date" class="form-control" id="profDOB" name="date_of_birth" value="{{ patient.date_of_birth.isoformat() if patient.date_of_birth else '' }}" required>
+                                    </div>
+                                    
+                                    <!-- Gender -->
+                                    <div class="col-md-6">
+                                        <label for="profGender" class="form-label small fw-semibold text-primary">Gender</label>
+                                        <select class="form-select" id="profGender" name="gender" required>
+                                            <option value="Male" {% if patient.gender == 'Male' %}selected{% endif %}>Male</option>
+                                            <option value="Female" {% if patient.gender == 'Female' %}selected{% endif %}>Female</option>
+                                            <option value="Other" {% if patient.gender == 'Other' %}selected{% endif %}>Other</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Blood Group -->
+                                    <div class="col-md-6">
+                                        <label for="profBlood" class="form-label small fw-semibold text-primary">Blood Group</label>
+                                        <input type="text" class="form-control" id="profBlood" name="blood_group" value="{{ patient.blood_group or '' }}" placeholder="e.g. O+, A-, AB+">
+                                    </div>
+                                    
+                                    <!-- Address -->
+                                    <div class="col-12">
+                                        <label for="profAddress" class="form-label small fw-semibold text-primary">Residential Address</label>
+                                        <textarea class="form-control" id="profAddress" name="address" rows="3" placeholder="Enter your full home address details...">{{ patient.address or '' }}</textarea>
+                                    </div>
+                                    
+                                    <div class="col-12 mt-4 text-end">
+                                        <button type="submit" class="btn btn-premium text-white px-4">Update Profile Records</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Cancel Appointment Confirmation Modal -->
+<div class="modal fade" id="cancelAppointmentModal" tabindex="-1" aria-labelledby="cancelAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <form id="cancelAppointmentForm" method="POST" action="">
+                <div class="modal-header bg-gradient bg-danger text-white py-3 border-0 rounded-top-4" style="background-color: var(--danger) !important;">
+                    <h5 class="modal-title font-outfit fw-bold text-white" id="cancelAppointmentModalLabel">Cancel Appointment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-dark text-start">
+                    <p class="fw-semibold">Are you sure you want to cancel this appointment?</p>
+                    <div class="mb-3">
+                        <label for="cancellationReason" class="form-label small fw-semibold text-primary">Cancellation Reason (Optional)</label>
+                        <textarea class="form-control" id="cancellationReason" name="cancellation_reason" rows="3" placeholder="Provide a reason for cancellation (optional)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Go Back</button>
+                    <button type="submit" class="btn btn-danger btn-sm text-white">Cancel Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-set date picker min date logic to prevent booking in past -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const appDateInput = document.getElementById("appDate");
+        if (appDateInput) {
+            const now = new Date();
+            // Format now as 'YYYY-MM-DDTHH:MM'
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            
+            const minDateTime = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+            appDateInput.min = minDateTime;
+        }
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const cancelModal = document.getElementById('cancelAppointmentModal');
+    if (cancelModal) {
+        cancelModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const appId = button.getAttribute('data-appointment-id');
+            const form = cancelModal.querySelector('#cancelAppointmentForm');
+            form.action = `/patient/appointment/cancel/${appId}`;
+            // Clear prior inputs
+            const reasonInput = cancelModal.querySelector('#cancellationReason');
+            if (reasonInput) {
+                reasonInput.value = '';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

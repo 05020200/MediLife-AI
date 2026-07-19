@@ -1,0 +1,933 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - MediLife AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-table-card {
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+    }
+    .search-wrapper {
+        position: relative;
+        max-width: 400px;
+    }
+    .search-wrapper .fa-search {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+    .search-wrapper .form-control {
+        padding-left: 36px;
+        border-radius: 10px;
+    }
+    .action-btn-group .btn {
+        padding: 0.35rem 0.6rem;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="manage-users-section py-4 my-3">
+    <div class="container animate-fade-in">
+        
+        <div class="row g-4">
+            
+            <!-- Left Sidebar -->
+            <div class="col-lg-3">
+                <div class="sidebar-container mb-4">
+                    <div class="text-center pb-3 mb-3 border-bottom border-light">
+                        <div class="avatar-wrapper mb-2 mx-auto bg-primary-glow d-flex align-items-center justify-content-center rounded-circle" style="width: 60px; height: 60px;">
+                            <i class="fa-solid fa-user-shield text-primary fs-2"></i>
+                        </div>
+                        <h6 class="font-outfit text-primary mb-1 fw-bold">{{ admin.username }}</h6>
+                        <span class="badge bg-success-glow text-success mb-2 font-outfit small">Administrator</span>
+                    </div>
+                    
+                    <div class="nav flex-column">
+                        <a class="sidebar-nav-link" id="sidebar-tab-overview" href="{{ url_for('main.admin_dashboard') }}">
+                            <i class="fa-solid fa-gauge-high"></i> Dashboard
+                        </a>
+                        <a class="sidebar-nav-link" id="sidebar-tab-patients" href="#" onclick="switchManageTab('patients')">
+                            <i class="fa-solid fa-users"></i> Manage Patients
+                        </a>
+                        <a class="sidebar-nav-link" id="sidebar-tab-doctors" href="#" onclick="switchManageTab('doctors')">
+                            <i class="fa-solid fa-user-doctor"></i> Manage Doctors
+                        </a>
+                        <a class="sidebar-nav-link" id="sidebar-tab-admins" href="#" onclick="switchManageTab('admins')">
+                            <i class="fa-solid fa-user-shield"></i> Manage Admins
+                        </a>
+                        <a class="sidebar-nav-link" id="sidebar-tab-leaves" href="{{ url_for('main.admin_leaves') }}">
+                            <i class="fa-solid fa-calendar-times"></i> Doctor Leave Management
+                        </a>
+                        <a href="{{ url_for('main.logout') }}" class="sidebar-nav-link text-danger mt-3 pt-3 border-top border-light">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Content Panel -->
+            <div class="col-lg-9">
+                <!-- Page Header -->
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                    <div>
+                        <h1 class="h2 font-outfit text-primary fw-bold mb-0">User Directory Management</h1>
+                        <p class="text-muted-custom small mb-0">View, search, and perform full CRUD operations on system accounts.</p>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-premium btn-sm text-white" data-bs-toggle="modal" data-bs-target="#addDoctorModal">
+                            <i class="fa-solid fa-user-doctor me-1"></i> Add Doctor
+                        </button>
+                        <button class="btn btn-outline-premium btn-sm" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+                            <i class="fa-solid fa-user-shield me-1"></i> Add Admin
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs border-bottom border-light mb-4" id="usersTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link font-outfit fw-bold active" id="patients-tab" data-bs-toggle="tab" data-bs-target="#patients" type="button" role="tab" aria-controls="patients" aria-selected="true">
+                            <i class="fa-solid fa-users text-primary me-2"></i> Patients
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link font-outfit fw-bold" id="doctors-tab" data-bs-toggle="tab" data-bs-target="#doctors" type="button" role="tab" aria-controls="doctors" aria-selected="false">
+                            <i class="fa-solid fa-user-doctor text-accent me-2"></i> Doctors
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link font-outfit fw-bold" id="admins-tab" data-bs-toggle="tab" data-bs-target="#admins" type="button" role="tab" aria-controls="admins" aria-selected="false">
+                            <i class="fa-solid fa-user-shield text-success me-2"></i> Admins
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="usersTabContent">
+            
+            <!-- PATIENTS TAB -->
+            <div class="tab-pane fade show active" id="patients" role="tabpanel" aria-labelledby="patients-tab">
+                <div class="glass-card p-4 border border-light shadow-sm user-table-card">
+                    <!-- Tab Actions -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="search-wrapper w-100">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" class="form-control" id="searchPatientsInput" placeholder="Search patients by name, email, or phone...">
+                        </div>
+                        <span class="badge bg-primary-glow text-primary font-sans small ms-3">{{ patients|length }} Registered</span>
+                    </div>
+
+                    {% if patients %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="patientsTable">
+                                <thead class="table-light">
+                                    <tr class="font-outfit text-primary small">
+                                        <th>Patient ID</th>
+                                        <th>Name</th>
+                                        <th>Email Address</th>
+                                        <th>Phone</th>
+                                        <th>Blood Group</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small text-dark font-sans">
+                                    {% for pat in patients %}
+                                        <tr class="patient-row-item">
+                                            <td class="font-monospace text-muted">#PAT-{{ pat.id }}</td>
+                                            <td class="fw-bold text-primary-light patient-name-cell">{{ pat.full_name }}</td>
+                                            <td class="patient-email-cell">{{ pat.email }}</td>
+                                            <td class="patient-phone-cell">{{ pat.phone or 'N/A' }}</td>
+                                            <td><span class="badge bg-light text-primary small">{{ pat.blood_group or 'N/A' }}</span></td>
+                                            <td class="text-end">
+                                                <div class="action-btn-group d-flex gap-1 justify-content-end">
+                                                    <button type="button" class="btn btn-outline-premium btn-sm" 
+                                                            data-bs-toggle="modal" data-bs-target="#viewPatientModal"
+                                                            data-id="{{ pat.id }}" data-fullname="{{ pat.full_name }}"
+                                                            data-email="{{ pat.email }}" data-phone="{{ pat.phone or 'Not Provided' }}"
+                                                            data-dob="{{ pat.date_of_birth.strftime('%B %d, %Y') }}"
+                                                            data-gender="{{ pat.gender }}" data-blood="{{ pat.blood_group or 'Not Provided' }}"
+                                                            data-address="{{ pat.address or 'Not Provided' }}"
+                                                            data-joined="{{ (pat.created_at | to_ist).strftime('%B %d, %Y') }}">
+                                                        <i class="fa-solid fa-eye"></i> View
+                                                    </button>
+                                                    
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                            data-bs-toggle="modal" data-bs-target="#editPatientModal"
+                                                            data-id="{{ pat.id }}" data-firstname="{{ pat.first_name }}"
+                                                            data-lastname="{{ pat.last_name }}" data-email="{{ pat.email }}"
+                                                            data-phone="{{ pat.phone or '' }}" data-dob="{{ pat.date_of_birth.strftime('%Y-%m-%d') }}"
+                                                            data-gender="{{ pat.gender }}" data-blood="{{ pat.blood_group or '' }}"
+                                                            data-address="{{ pat.address or '' }}">
+                                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                                    </button>
+                                                    
+                                                    <form action="{{ url_for('main.delete_patient', patient_id=pat.id) }}" method="POST" 
+                                                          onsubmit="return confirm('Are you sure you want to delete patient {{ pat.full_name }} and all their appointments and consultation history? This action cannot be undone.');" 
+                                                          class="d-inline">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-users fs-2 text-light mb-3"></i>
+                            <h6>No patient records found in the directory.</h6>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- DOCTORS TAB -->
+            <div class="tab-pane fade" id="doctors" role="tabpanel" aria-labelledby="doctors-tab">
+                <div class="glass-card p-4 border border-light shadow-sm user-table-card">
+                    <!-- Tab Actions -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="search-wrapper w-100">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" class="form-control" id="searchDoctorsInput" placeholder="Search doctors by name, email, or specialization...">
+                        </div>
+                        <span class="badge bg-success-glow text-success font-sans small ms-3">{{ doctors|length }} Practitioners</span>
+                    </div>
+
+                    {% if doctors %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="doctorsTable">
+                                <thead class="table-light">
+                                    <tr class="font-outfit text-primary small">
+                                        <th>Doctor ID</th>
+                                        <th>Name</th>
+                                        <th>Specialization</th>
+                                        <th>License Number</th>
+                                        <th>Email Address</th>
+                                        <th>Experience</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small text-dark font-sans">
+                                    {% for doc in doctors %}
+                                        <tr class="doctor-row-item">
+                                            <td class="font-monospace text-muted">#DOC-{{ doc.id }}</td>
+                                            <td class="fw-bold text-primary-light doctor-name-cell">Dr. {{ doc.full_name }}</td>
+                                            <td class="doctor-spec-cell"><span class="badge bg-primary-glow text-primary small">{{ doc.specialization }}</span></td>
+                                            <td class="font-monospace small">{{ doc.license_number }}</td>
+                                            <td class="doctor-email-cell">{{ doc.email }}</td>
+                                            <td>{{ doc.experience_years }} yrs</td>
+                                            <td class="text-end">
+                                                <div class="action-btn-group d-flex gap-1 justify-content-end">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                            data-bs-toggle="modal" data-bs-target="#editDoctorModal"
+                                                            data-id="{{ doc.id }}" data-firstname="{{ doc.first_name }}"
+                                                            data-lastname="{{ doc.last_name }}" data-email="{{ doc.email }}"
+                                                            data-phone="{{ doc.phone or '' }}" data-specialization="{{ doc.specialization }}"
+                                                            data-license="{{ doc.license_number }}" data-experience="{{ doc.experience_years }}"
+                                                             {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                                                             data-avail-{{ day | lower }}="{{ '1' if doc.is_available_day(day) else '0' }}"
+                                                             data-avail-{{ day | lower }}-morning="{{ '1' if doc.is_available(day, 'morning') else '0' }}"
+                                                             data-avail-{{ day | lower }}-morning-start="{{ doc.get_session_time(day, 'morning', 'start') }}"
+                                                             data-avail-{{ day | lower }}-morning-end="{{ doc.get_session_time(day, 'morning', 'end') }}"
+                                                             data-avail-{{ day | lower }}-afternoon="{{ '1' if doc.is_available(day, 'afternoon') else '0' }}"
+                                                             data-avail-{{ day | lower }}-afternoon-start="{{ doc.get_session_time(day, 'afternoon', 'start') }}"
+                                                             data-avail-{{ day | lower }}-afternoon-end="{{ doc.get_session_time(day, 'afternoon', 'end') }}"
+                                                             {% endfor %}>
+                                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                                    </button>
+                                                    
+                                                    <form action="{{ url_for('main.delete_doctor', doctor_id=doc.id) }}" method="POST" 
+                                                          onsubmit="return confirm('Are you sure you want to delete Dr. {{ doc.full_name }}? All scheduled appointments and clinical records assigned to them will be deleted. This action is irreversible.');" 
+                                                          class="d-inline">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-user-doctor fs-2 text-light mb-3"></i>
+                            <h6>No practitioner records found in the directory.</h6>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ADMINS TAB -->
+            <div class="tab-pane fade" id="admins" role="tabpanel" aria-labelledby="admins-tab">
+                <div class="glass-card p-4 border border-light shadow-sm user-table-card">
+                    <!-- Tab Actions -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="search-wrapper w-100">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" class="form-control" id="searchAdminsInput" placeholder="Search administrators by username or email...">
+                        </div>
+                        <span class="badge bg-success-glow text-success font-sans small ms-3">{{ admins|length }} Active</span>
+                    </div>
+
+                    {% if admins %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="adminsTable">
+                                <thead class="table-light">
+                                    <tr class="font-outfit text-primary small">
+                                        <th>Admin ID</th>
+                                        <th>Username</th>
+                                        <th>Email Address</th>
+                                        <th>Joined Date</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small text-dark font-sans">
+                                    {% for adm in admins %}
+                                        <tr class="admin-row-item">
+                                            <td class="font-monospace text-muted">#ADM-{{ adm.id }}</td>
+                                            <td class="fw-bold text-primary-light admin-username-cell">{{ adm.username }}</td>
+                                            <td class="admin-email-cell">{{ adm.email }}</td>
+                                            <td class="text-muted">{{ (adm.created_at | to_ist).strftime('%b %d, %Y') }}</td>
+                                            <td class="text-end">
+                                                <div class="action-btn-group d-flex gap-1 justify-content-end">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                            data-bs-toggle="modal" data-bs-target="#editAdminModal"
+                                                            data-id="{{ adm.id }}" data-username="{{ adm.username }}"
+                                                            data-email="{{ adm.email }}">
+                                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                                    </button>
+                                                    
+                                                    {% if adm.id == admin.id %}
+                                                        <button type="button" class="btn btn-outline-danger btn-sm disabled" title="You cannot delete yourself." disabled>
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    {% else %}
+                                                        <form action="{{ url_for('main.delete_admin', admin_id=adm.id) }}" method="POST" 
+                                                              onsubmit="return confirm('Are you sure you want to delete administrator {{ adm.username }}? They will lose all dashboard privileges immediately. This action is irreversible.');" 
+                                                              class="d-inline">
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                                <i class="fa-solid fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-user-shield fs-2 text-light mb-3"></i>
+                            <h6>No administrator records found in the directory.</h6>
+                        </div>
+                    {% endif %}
+                </div>
+            </div> <!-- End of tab-content -->
+
+        </div> <!-- End of col-lg-9 -->
+    </div> <!-- End of row -->
+</div> <!-- End of container -->
+</section>
+
+<!-- View Patient Modal -->
+<div class="modal fade" id="viewPatientModal" tabindex="-1" aria-labelledby="viewPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient bg-primary text-white py-3 border-0 rounded-top-4">
+                <h5 class="modal-title font-outfit fw-bold text-white" id="viewPatientModalLabel">
+                    <i class="fa-solid fa-id-card me-2"></i> Patient Demographic Profile
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light text-dark small">
+                <div class="row g-3">
+                    <div class="col-12 border-bottom border-light pb-2 mb-2">
+                        <strong class="text-primary-light d-block small mb-1">Full Name</strong>
+                        <span class="fs-6 fw-bold text-primary" id="viewPatFullName"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Email Address</strong>
+                        <span class="fw-medium" id="viewPatEmail"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Phone Number</strong>
+                        <span class="fw-medium" id="viewPatPhone"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Date of Birth</strong>
+                        <span class="fw-medium" id="viewPatDob"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Gender</strong>
+                        <span class="fw-medium" id="viewPatGender"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Blood Group</strong>
+                        <span class="badge bg-light text-primary fs-6 font-outfit" id="viewPatBlood"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-primary-light d-block small mb-1">Registration Date</strong>
+                        <span class="fw-medium text-muted" id="viewPatJoined"></span>
+                    </div>
+                    <div class="col-12">
+                        <strong class="text-primary-light d-block small mb-1">Residential Address</strong>
+                        <div class="p-2 bg-white rounded border border-light" id="viewPatAddress" style="white-space: pre-wrap;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close Profile</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Patient Modal -->
+<div class="modal fade" id="editPatientModal" tabindex="-1" aria-labelledby="editPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient bg-primary text-white py-3 border-0 rounded-top-4">
+                <h5 class="modal-title font-outfit fw-bold text-white" id="editPatientModalLabel">
+                    <i class="fa-solid fa-user-edit me-2"></i> Modify Patient Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editPatientForm" method="POST" action="">
+                <div class="modal-body p-4 bg-light">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="first_name" id="editPatFirstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="last_name" id="editPatLastName" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-primary">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" name="email" id="editPatEmail" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Phone Number</label>
+                            <input type="text" class="form-control" name="phone" id="editPatPhone">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Date of Birth <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="date_of_birth" id="editPatDob" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Blood Group</label>
+                            <input type="text" class="form-control" name="blood_group" id="editPatBlood">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-primary">Address</label>
+                            <textarea class="form-control" name="address" id="editPatAddress" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-premium btn-sm text-white">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Doctor Modal -->
+<div class="modal fade" id="editDoctorModal" tabindex="-1" aria-labelledby="editDoctorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient bg-primary text-white py-3 border-0 rounded-top-4">
+                <h5 class="modal-title font-outfit fw-bold text-white" id="editDoctorModalLabel">
+                    <i class="fa-solid fa-user-edit me-2"></i> Modify Practitioner Profile
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editDoctorForm" method="POST" action="">
+                <div class="modal-body p-4 bg-light">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="first_name" id="editDocFirstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="last_name" id="editDocLastName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" name="email" id="editDocEmail" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Phone Number</label>
+                            <input type="text" class="form-control" name="phone" id="editDocPhone">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Specialization <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="specialization" id="editDocSpecialization" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">License Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="license_number" id="editDocLicense" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Years of Experience</label>
+                            <input type="number" class="form-control" name="experience_years" id="editDocExperience" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Password <span class="text-muted-custom">(Leave blank to keep unchanged)</span></label>
+                            <input type="password" class="form-control" name="password" placeholder="Enter new password to reset">
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <h6 class="font-outfit text-primary fw-bold border-bottom pb-1 mt-2 small"><i class="fa-solid fa-calendar-day me-1 text-accent"></i> Consultation Availability (Weekly Day &amp; Session-based)</h6>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="row g-3">
+                                {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                                <div class="col-md-6 border-bottom border-light pb-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 bg-light p-2 rounded">
+                                        <span class="fw-bold text-primary font-outfit small">{{ day }}</span>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" name="avail_{{ day }}" value="1" checked id="edit_avail_{{ day | lower }}" onchange="document.getElementById('edit_sessions_{{ day | lower }}').classList.toggle('d-none', !this.checked)">
+                                            <label class="form-check-label small fw-semibold text-muted-custom" for="edit_avail_{{ day | lower }}">Available</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="edit_sessions_{{ day | lower }}" class="row g-2 px-2">
+                                        <!-- Morning Session -->
+                                        <div class="col-12 border-bottom border-light pb-2 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="avail_{{ day }}_morning" value="1" checked id="edit_avail_{{ day | lower }}_morning" onchange="const els = document.querySelectorAll('.edit_time_{{ day | lower }}_morning'); els.forEach(el => el.disabled = !this.checked)">
+                                                <label class="form-check-label small fw-bold text-primary-light" for="edit_avail_{{ day | lower }}_morning">Morning Session</label>
+                                            </div>
+                                            <div class="row g-2 mt-1">
+                                                <div class="col-6">
+                                                    <label class="form-label small text-muted-custom mb-0" style="font-size: 0.7rem;">Start Time</label>
+                                                    <input type="text" class="form-control form-control-sm edit_time_{{ day | lower }}_morning" name="avail_{{ day }}_morning_start" id="edit_avail_{{ day | lower }}_morning_start" value="09:00 AM" placeholder="e.g. 09:00 AM">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small text-muted-custom mb-0" style="font-size: 0.7rem;">End Time</label>
+                                                    <input type="text" class="form-control form-control-sm edit_time_{{ day | lower }}_morning" name="avail_{{ day }}_morning_end" id="edit_avail_{{ day | lower }}_morning_end" value="01:00 PM" placeholder="e.g. 01:00 PM">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Afternoon Session -->
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="avail_{{ day }}_afternoon" value="1" checked id="edit_avail_{{ day | lower }}_afternoon" onchange="const els = document.querySelectorAll('.edit_time_{{ day | lower }}_afternoon'); els.forEach(el => el.disabled = !this.checked)">
+                                                <label class="form-check-label small fw-bold text-primary-light" for="edit_avail_{{ day | lower }}_afternoon">Afternoon Session</label>
+                                            </div>
+                                            <div class="row g-2 mt-1">
+                                                <div class="col-6">
+                                                    <label class="form-label small text-muted-custom mb-0" style="font-size: 0.7rem;">Start Time</label>
+                                                    <input type="text" class="form-control form-control-sm edit_time_{{ day | lower }}_afternoon" name="avail_{{ day }}_afternoon_start" id="edit_avail_{{ day | lower }}_afternoon_start" value="02:00 PM" placeholder="e.g. 02:00 PM">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small text-muted-custom mb-0" style="font-size: 0.7rem;">End Time</label>
+                                                    <input type="text" class="form-control form-control-sm edit_time_{{ day | lower }}_afternoon" name="avail_{{ day }}_afternoon_end" id="edit_avail_{{ day | lower }}_afternoon_end" value="05:00 PM" placeholder="e.g. 05:00 PM">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-premium btn-sm text-white">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Admin Modal -->
+<div class="modal fade" id="editAdminModal" tabindex="-1" aria-labelledby="editAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient bg-primary text-white py-3 border-0 rounded-top-4">
+                <h5 class="modal-title font-outfit fw-bold text-white" id="editAdminModalLabel">
+                    <i class="fa-solid fa-user-edit me-2"></i> Modify Admin Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editAdminForm" method="POST" action="">
+                <div class="modal-body p-4 bg-light">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-primary">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="username" id="editAdmUsername" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-primary">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" name="email" id="editAdmEmail" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-primary">Password <span class="text-muted-custom">(Leave blank to keep unchanged)</span></label>
+                            <input type="password" class="form-control" name="password" placeholder="Enter new password to reset">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-premium btn-sm text-white">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Doctor Modal (Shared Registration) -->
+<div class="modal fade" id="addDoctorModal" tabindex="-1" aria-labelledby="addDoctorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient bg-primary text-white py-3 border-0 rounded-top-4">
+                <h5 class="modal-title font-outfit fw-bold text-white" id="addDoctorModalLabel">
+                    <i class="fa-solid fa-user-plus me-2"></i> Register New Doctor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('main.admin_add_doctor') }}" method="POST">
+                <div class="modal-body p-4 bg-light">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="first_name" autocomplete="off" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="last_name" autocomplete="off" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" name="email" autocomplete="off" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Phone Number</label>
+                            <input type="text" class="form-control" name="phone" autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Specialization <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="specialization" placeholder="Cardiology, General, etc." autocomplete="off" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Medical License Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="license_number" autocomplete="off" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Years of Experience</label>
+                            <input type="number" class="form-control" name="experience_years" min="0" autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-primary">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" name="password" autocomplete="new-password" required>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <h6 class="font-outfit text-primary fw-bold border-bottom pb-1 mt-2 small"><i class="fa-solid fa-calendar-day me-1 text-accent"></i> Consultation Availability (Weekly Day &amp; Session-based)</h6>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="row g-3">
+                                {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                                <div class="col-md-6 border-bottom border-light pb-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 bg-light p-2 rounded">
+                                        <span class="fw-bold text-primary font-outfit small">{{ day }}</span>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" name="avail_{{ day }}" value="1" checked id="avail_{{ day | lower }}" onchange="document.getElementById('sessions_{{ day | lower }}').classList.toggle('d-none', !this.checked)">
+                                            <label class="form-check-label small fw-semibold text-muted-custom" for="avail_{{ day | lower }}">Available</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="sessions_{{ day | lower }}" class="row g-2 px-2">
+                                        <!-- Morning Session -->
+                                        <div class="col-12 border-bottom border-light pb-2 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="avail_{{ day }}_morning" value="1" checked id="avail_{{ day | lower }}_morning" onchange="const els = document.querySelectorAll('.time_{{ day | lower }}_morning'); els.forEach(el => el.disabled = !this.checked)">
+                                                <label class="form-check-label small fw-bold text-primary-light" for="avail_{{ day | lower }}_morning">Morning Session</label>
+                                            </div>
+                                            <div class="row g-2 mt-1">
+                                                <div class="col-6">
+                                                    <label class="form-label small text-muted-custom mb-0" style="font-size: 0.7rem;">Start Time</label>
+                                                    <input type="text" class="form-control form-control-sm time_{{ day | lower }}_morning" name="avail_{{ day }}_morning_start" value="09:00 AM" placeholder="e.g. 09:00 AM" autocomplete="off">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small text-muted-custom mb-0" style="font-size: 0.7rem;">End Time</label>
+                                                    <input type="text" class="form-control form-control-sm time_{{ day | lower }}_morning" name="avail_{{ day }}_morning_end" value="01:00 PM" placeholder="e.g. 01:00 PM" autocomplete="off">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Afternoon Session -->
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="avail_{{ day }}_afternoon" value="1" checked id="avail_{{ day | lower }}_afternoon" onchange="const els = document.querySelectorAll('.time_{{ day | lower }}_afternoon'); els.forEach(el => el.disabled = !this.checked)">
+                                                <label class="form-check-label small fw-bold text-primary-light" for="avail_{{ day | lower }}_afternoon">Afternoon Session</label>
+                                            </div>
+                                            <div class="row g-2 mt-1">
+                                                <div class="col-6">
+                                                    <label class="form-label small text-muted-custom mb-0" style="font-size: 0.7rem;">Start Time</label>
+                                                    <input type="text" class="form-control form-control-sm time_{{ day | lower }}_afternoon" name="avail_{{ day }}_afternoon_start" value="02:00 PM" placeholder="e.g. 02:00 PM" autocomplete="off">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small text-muted-custom mb-0" style="font-size: 0.7rem;">End Time</label>
+                                                    <input type="text" class="form-control form-control-sm time_{{ day | lower }}_afternoon" name="avail_{{ day }}_afternoon_end" value="05:00 PM" placeholder="e.g. 05:00 PM" autocomplete="off">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-premium btn-sm text-white">Save Doctor Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Admin Modal (Shared Registration) -->
+<div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient bg-primary text-white py-3 border-0 rounded-top-4">
+                <h5 class="modal-title font-outfit fw-bold text-white" id="addAdminModalLabel">
+                    <i class="fa-solid fa-user-shield me-2"></i> Register New Admin
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('main.admin_add_admin') }}" method="POST">
+                <div class="modal-body p-4 bg-light">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-primary">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="username" autocomplete="off" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-primary">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" name="email" autocomplete="off" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-primary">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" name="password" autocomplete="new-password" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-premium btn-sm text-white">Save Admin Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchManageTab(tabId) {
+    const tabEl = document.querySelector('#' + tabId + '-tab');
+    if (tabEl) {
+        const tabObj = bootstrap.Tab.getOrCreateInstance(tabEl);
+        tabObj.show();
+        updateSidebarActive(tabId);
+    }
+}
+
+function updateSidebarActive(tabId) {
+    document.querySelectorAll('.sidebar-nav-link').forEach(link => link.classList.remove('active'));
+    const sidebarLink = document.getElementById('sidebar-tab-' + tabId);
+    if (sidebarLink) {
+        sidebarLink.classList.add('active');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ----------------------------------------------------
+    // Tab switching based on URL parameters or hash
+    // ----------------------------------------------------
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab') || 'patients';
+    
+    switchManageTab(tabParam);
+
+    // Sync tab clicks to sidebar highlight
+    const tabTriggerList = document.querySelectorAll('#usersTab button');
+    tabTriggerList.forEach(triggerEl => {
+        triggerEl.addEventListener('shown.bs.tab', event => {
+            const activeTabId = event.target.id.split('-')[0];
+            updateSidebarActive(activeTabId);
+        });
+    });
+
+    // ----------------------------------------------------
+    // Interactive Live Table Search
+    // ----------------------------------------------------
+    function setupTableSearch(inputId, tableId, rowSelector, matchSelectorClass) {
+        const input = document.getElementById(inputId);
+        const table = document.getElementById(tableId);
+        
+        if (input && table) {
+            input.addEventListener('keyup', function() {
+                const filter = input.value.toLowerCase().trim();
+                const rows = table.querySelectorAll(rowSelector);
+                
+                rows.forEach(function(row) {
+                    let match = false;
+                    const cells = row.querySelectorAll('.' + matchSelectorClass);
+                    cells.forEach(function(cell) {
+                        if (cell.textContent.toLowerCase().includes(filter)) {
+                            match = true;
+                        }
+                    });
+                    if (match) {
+                        row.classList.remove('d-none');
+                    } else {
+                        row.classList.add('d-none');
+                    }
+                });
+            });
+        }
+    }
+
+    setupTableSearch('searchPatientsInput', 'patientsTable', '.patient-row-item', 'patient-name-cell,patient-email-cell,patient-phone-cell');
+    setupTableSearch('searchDoctorsInput', 'doctorsTable', '.doctor-row-item', 'doctor-name-cell,doctor-email-cell,doctor-spec-cell');
+    setupTableSearch('searchAdminsInput', 'adminsTable', '.admin-row-item', 'admin-username-cell,admin-email-cell');
+
+    // ----------------------------------------------------
+    // View Patient Detail Binder
+    // ----------------------------------------------------
+    const viewPatientModal = document.getElementById('viewPatientModal');
+    if (viewPatientModal) {
+        viewPatientModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            viewPatientModal.querySelector('#viewPatFullName').textContent = btn.getAttribute('data-fullname');
+            viewPatientModal.querySelector('#viewPatEmail').textContent = btn.getAttribute('data-email');
+            viewPatientModal.querySelector('#viewPatPhone').textContent = btn.getAttribute('data-phone');
+            viewPatientModal.querySelector('#viewPatDob').textContent = btn.getAttribute('data-dob');
+            viewPatientModal.querySelector('#viewPatGender').textContent = btn.getAttribute('data-gender');
+            viewPatientModal.querySelector('#viewPatBlood').textContent = btn.getAttribute('data-blood');
+            viewPatientModal.querySelector('#viewPatJoined').textContent = btn.getAttribute('data-joined');
+            viewPatientModal.querySelector('#viewPatAddress').textContent = btn.getAttribute('data-address');
+        });
+    }
+
+    // ----------------------------------------------------
+    // Edit Patient Form Binder
+    // ----------------------------------------------------
+    const editPatientModal = document.getElementById('editPatientModal');
+    if (editPatientModal) {
+        editPatientModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            const form = editPatientModal.querySelector('#editPatientForm');
+            form.action = '/admin/user/patient/edit/' + btn.getAttribute('data-id');
+            
+            editPatientModal.querySelector('#editPatFirstName').value = btn.getAttribute('data-firstname');
+            editPatientModal.querySelector('#editPatLastName').value = btn.getAttribute('data-lastname');
+            editPatientModal.querySelector('#editPatEmail').value = btn.getAttribute('data-email');
+            editPatientModal.querySelector('#editPatPhone').value = btn.getAttribute('data-phone');
+            editPatientModal.querySelector('#editPatDob').value = btn.getAttribute('data-dob');
+            editPatientModal.querySelector('#editPatBlood').value = btn.getAttribute('data-blood');
+            editPatientModal.querySelector('#editPatAddress').value = btn.getAttribute('data-address');
+        });
+    }
+
+    // ----------------------------------------------------
+    // Edit Doctor Form Binder
+    // ----------------------------------------------------
+    const editDoctorModal = document.getElementById('editDoctorModal');
+    if (editDoctorModal) {
+        editDoctorModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            const form = editDoctorModal.querySelector('#editDoctorForm');
+            form.action = '/admin/user/doctor/edit/' + btn.getAttribute('data-id');
+            
+            editDoctorModal.querySelector('#editDocFirstName').value = btn.getAttribute('data-firstname');
+            editDoctorModal.querySelector('#editDocLastName').value = btn.getAttribute('data-lastname');
+            editDoctorModal.querySelector('#editDocEmail').value = btn.getAttribute('data-email');
+            editDoctorModal.querySelector('#editDocPhone').value = btn.getAttribute('data-phone');
+            editDoctorModal.querySelector('#editDocSpecialization').value = btn.getAttribute('data-specialization');
+            editDoctorModal.querySelector('#editDocLicense').value = btn.getAttribute('data-license');
+            editDoctorModal.querySelector('#editDocExperience').value = btn.getAttribute('data-experience');
+            
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            days.forEach(day => {
+                const availVal = btn.getAttribute('data-avail-' + day) === '1';
+                const mornVal = btn.getAttribute('data-avail-' + day + '-morning') === '1';
+                const mornStartVal = btn.getAttribute('data-avail-' + day + '-morning-start') || '09:00 AM';
+                const mornEndVal = btn.getAttribute('data-avail-' + day + '-morning-end') || '01:00 PM';
+                const aftVal = btn.getAttribute('data-avail-' + day + '-afternoon') === '1';
+                const aftStartVal = btn.getAttribute('data-avail-' + day + '-afternoon-start') || '02:00 PM';
+                const aftEndVal = btn.getAttribute('data-avail-' + day + '-afternoon-end') || '05:00 PM';
+                
+                const availCheck = editDoctorModal.querySelector('#edit_avail_' + day);
+                const mornCheck = editDoctorModal.querySelector('#edit_avail_' + day + '_morning');
+                const mornStart = editDoctorModal.querySelector('#edit_avail_' + day + '_morning_start');
+                const mornEnd = editDoctorModal.querySelector('#edit_avail_' + day + '_morning_end');
+                const aftCheck = editDoctorModal.querySelector('#edit_avail_' + day + '_afternoon');
+                const aftStart = editDoctorModal.querySelector('#edit_avail_' + day + '_afternoon_start');
+                const aftEnd = editDoctorModal.querySelector('#edit_avail_' + day + '_afternoon_end');
+                
+                if (availCheck) {
+                    availCheck.checked = availVal;
+                    const container = editDoctorModal.querySelector('#edit_sessions_' + day);
+                    if (container) container.classList.toggle('d-none', !availVal);
+                }
+                
+                if (mornCheck) {
+                    mornCheck.checked = mornVal;
+                    const els = editDoctorModal.querySelectorAll('.edit_time_' + day + '_morning');
+                    els.forEach(el => el.disabled = !mornVal);
+                }
+                if (mornStart) mornStart.value = mornStartVal;
+                if (mornEnd) mornEnd.value = mornEndVal;
+                
+                if (aftCheck) {
+                    aftCheck.checked = aftVal;
+                    const els = editDoctorModal.querySelectorAll('.edit_time_' + day + '_afternoon');
+                    els.forEach(el => el.disabled = !aftVal);
+                }
+                if (aftStart) aftStart.value = aftStartVal;
+                if (aftEnd) aftEnd.value = aftEndVal;
+            });
+        });
+    }
+
+    // ----------------------------------------------------
+    // Edit Admin Form Binder
+    // ----------------------------------------------------
+    const editAdminModal = document.getElementById('editAdminModal');
+    if (editAdminModal) {
+        editAdminModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            const form = editAdminModal.querySelector('#editAdminForm');
+            form.action = '/admin/user/admin/edit/' + btn.getAttribute('data-id');
+            
+            editAdminModal.querySelector('#editAdmUsername').value = btn.getAttribute('data-username');
+            editAdminModal.querySelector('#editAdmEmail').value = btn.getAttribute('data-email');
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - MediLife AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-stats-card {
+        border-radius: 16px;
+        transition: var(--transition-smooth);
+    }
+    .admin-stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    }
+    .activity-badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    .badge-patient {
+        background-color: rgba(30, 58, 138, 0.08);
+        color: var(--primary);
+    }
+    .badge-doctor {
+        background-color: rgba(13, 148, 136, 0.08);
+        color: var(--accent);
+    }
+    .badge-admin {
+        background-color: rgba(16, 185, 129, 0.08);
+        color: #10b981;
+    }
+    .badge-appointment {
+        background-color: rgba(245, 158, 11, 0.08);
+        color: #b45309;
+    }
+    .badge-consultation {
+        background-color: rgba(99, 102, 241, 0.08);
+        color: #6366f1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard-section py-4 my-3">
+    <div class="container animate-fade-in">
+        
+        <div class="row g-4">
+            
+            <!-- Left Sidebar -->
+            <div class="col-lg-3">
+                <div class="sidebar-container mb-4">
+                    <div class="text-center pb-3 mb-3 border-bottom border-light">
+                        <div class="avatar-wrapper mb-2 mx-auto bg-primary-glow d-flex align-items-center justify-content-center rounded-circle" style="width: 60px; height: 60px;">
+                            <i class="fa-solid fa-user-shield text-primary fs-2"></i>
+                        </div>
+                        <h6 class="font-outfit text-primary mb-1 fw-bold">{{ admin.username }}</h6>
+                        <span class="badge bg-success-glow text-success mb-2 font-outfit small">Administrator</span>
+                    </div>
+                    
+                    <div class="nav flex-column">
+                        <a class="sidebar-nav-link active" href="{{ url_for('main.admin_dashboard') }}">
+                            <i class="fa-solid fa-gauge-high"></i> Dashboard
+                        </a>
+                        <a class="sidebar-nav-link" href="{{ url_for('main.admin_users', tab='patients') }}">
+                            <i class="fa-solid fa-users"></i> Manage Patients
+                        </a>
+                        <a class="sidebar-nav-link" href="{{ url_for('main.admin_users', tab='doctors') }}">
+                            <i class="fa-solid fa-user-doctor"></i> Manage Doctors
+                        </a>
+                        <a class="sidebar-nav-link" href="{{ url_for('main.admin_users', tab='admins') }}">
+                            <i class="fa-solid fa-user-shield"></i> Manage Admins
+                        </a>
+                        <a class="sidebar-nav-link" href="{{ url_for('main.admin_leaves') }}">
+                            <i class="fa-solid fa-calendar-times"></i> Doctor Leave Management
+                        </a>
+                        <a href="{{ url_for('main.logout') }}" class="sidebar-nav-link text-danger mt-3 pt-3 border-top border-light">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Content Panel -->
+            <div class="col-lg-9">
+                <!-- Welcome Banner -->
+                <div class="dashboard-header-banner p-4 bg-light rounded-4 border border-light shadow-sm mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <span class="badge bg-success-glow text-success mb-2 font-outfit small">Administrator Portal</span>
+                            <h1 class="h2 font-outfit text-primary fw-bold mb-1">System Control Center</h1>
+                            <p class="text-muted-custom small mb-0">Logged in as: <strong>{{ admin.username }}</strong></p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <span class="small text-muted"><i class="fa-regular fa-clock me-1"></i> Today: {{ datetime.now().strftime('%B %d, %Y') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Stats Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-lg-4 col-xl-2.4">
+                        <div class="glass-card p-3 border border-light shadow-sm admin-stats-card text-center card-hover-scale">
+                            <div class="text-primary fs-3 mb-2"><i class="fa-solid fa-users"></i></div>
+                            <h6 class="text-muted-custom font-sans small mb-1">Patients</h6>
+                            <h3 class="font-outfit text-primary fw-bold mb-0">{{ total_patients }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-4 col-xl-2.4">
+                        <div class="glass-card p-3 border border-light shadow-sm admin-stats-card text-center card-hover-scale">
+                            <div class="text-accent fs-3 mb-2"><i class="fa-solid fa-user-doctor"></i></div>
+                            <h6 class="text-muted-custom font-sans small mb-1">Doctors</h6>
+                            <h3 class="font-outfit text-accent fw-bold mb-0">{{ total_doctors }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-4 col-xl-2.4">
+                        <div class="glass-card p-3 border border-light shadow-sm admin-stats-card text-center card-hover-scale">
+                            <div class="text-success fs-3 mb-2"><i class="fa-solid fa-user-shield"></i></div>
+                            <h6 class="text-muted-custom font-sans small mb-1">Admins</h6>
+                            <h3 class="font-outfit text-success fw-bold mb-0">{{ total_admins }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-4 col-xl-2.4">
+                        <div class="glass-card p-3 border border-light shadow-sm admin-stats-card text-center card-hover-scale">
+                            <div class="text-warning fs-3 mb-2"><i class="fa-solid fa-calendar-day"></i></div>
+                            <h6 class="text-muted-custom font-sans small mb-1">Appts</h6>
+                            <h3 class="font-outfit text-warning fw-bold mb-0">{{ today_appointments_count }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-4 col-xl-2.4">
+                        <div class="glass-card p-3 border border-light shadow-sm admin-stats-card text-center card-hover-scale">
+                            <div class="text-info fs-3 mb-2"><i class="fa-solid fa-clipboard-list"></i></div>
+                            <h6 class="text-muted-custom font-sans small mb-1">Consults</h6>
+                            <h3 class="font-outfit text-info fw-bold mb-0">{{ total_consultations }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appointment Requests Section -->
+                <div class="glass-card p-4 border border-light shadow-sm mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-light">
+                        <h5 class="font-outfit text-primary fw-bold mb-0">
+                            <i class="fa-solid fa-calendar-check text-accent me-2"></i> Appointment Requests
+                        </h5>
+                        <span class="badge bg-warning-glow text-warning font-sans small">Pending Approval</span>
+                    </div>
+
+                    {% if pending_appointments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr class="font-outfit text-primary small">
+                                        <th scope="col" style="width: 25%">Patient</th>
+                                        <th scope="col" style="width: 25%">Doctor</th>
+                                        <th scope="col" style="width: 15%">Requested Date</th>
+                                        <th scope="col" style="width: 15%">Requested Session</th>
+                                        <th scope="col" style="width: 10%">Reason</th>
+                                        <th scope="col" style="width: 10%" class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small text-dark font-sans">
+                                    {% for app in pending_appointments %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold text-primary-light">{{ app.patient.full_name }}</div>
+                                                <span class="small text-muted">{{ app.patient.email }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold text-primary-light">Dr. {{ app.doctor.full_name }}</div>
+                                                <span class="small text-muted">{{ app.doctor.specialization }}</span>
+                                            </td>
+                                            <td class="small fw-semibold">
+                                                {{ (app.appointment_date | to_ist).strftime('%B %d, %Y') }}
+                                            </td>
+                                            <td>
+                                                <span class="badge {% if app.session == 'Morning' %}bg-primary-glow text-primary{% else %}bg-accent-glow text-accent{% endif %}">
+                                                    {{ app.session }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted small d-inline-block text-truncate" style="max-width: 120px;" title="{{ app.reason or 'No reason provided' }}">
+                                                    {{ app.reason or 'No reason provided' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-1 justify-content-center align-items-center">
+                                                    <form method="POST" action="{{ url_for('main.admin_approve_appointment', appointment_id=app.id) }}" style="display: inline-block;">
+                                                        <button type="submit" class="btn btn-success btn-xs font-outfit text-white py-1 px-2"><i class="fa-solid fa-check me-1"></i> Approve</button>
+                                                    </form>
+                                                    <button class="btn btn-danger btn-xs font-outfit text-white py-1 px-2" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#rejectModal" 
+                                                            data-app-id="{{ app.id }}"
+                                                            data-patient-name="{{ app.patient.full_name }}"
+                                                            data-doctor-name="Dr. {{ app.doctor.full_name }}">
+                                                        <i class="fa-solid fa-xmark me-1"></i> Reject
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="fa-regular fa-calendar-check fs-2 text-light mb-2"></i>
+                            <p class="small mb-0">No pending appointment requests.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recent System Activity Section -->
+                <div class="glass-card p-4 border border-light shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-light">
+                        <h5 class="font-outfit text-primary fw-bold mb-0">
+                            <i class="fa-solid fa-clock-rotate-left text-accent me-2"></i> Recent System Activity
+                        </h5>
+                        <span class="badge bg-primary-glow text-primary font-sans small">Live Audit Feed</span>
+                    </div>
+
+                    {% if recent_activities %}
+                        <div class="activity-timeline">
+                            {% for act in recent_activities %}
+                                <div class="activity-timeline-item">
+                                    <div class="activity-timeline-marker 
+                                        {% if act.activity_name == 'New Patient Registered' %}bg-patient
+                                        {% elif act.activity_name == 'Doctor Added' %}bg-doctor
+                                        {% elif act.activity_name == 'Admin Added' %}bg-admin
+                                        {% elif act.activity_name == 'Appointment Booked' %}bg-appointment
+                                        {% elif act.activity_name == 'Consultation Completed' %}bg-consultation
+                                        {% elif act.activity_name == 'Patient Cancelled Appointment' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}"></div>
+                                    <h6 class="font-outfit text-primary small fw-bold mb-1">
+                                        {{ act.activity_name }}
+                                    </h6>
+                                    <p class="small text-dark mb-0">Triggered by: <strong>{{ act.user }}</strong></p>
+                                    <span class="small text-muted" style="font-size: 0.75rem;"><i class="fa-regular fa-clock me-1"></i> {{ act.timestamp | format_ist }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted animate-fade-in">
+                            <i class="fa-solid fa-database fs-2 text-light mb-3"></i>
+                            <h6>No activities logged in the audit trail yet.</h6>
+                            <p class="small mb-0">Activities like patient registrations, appointments, or consultations will appear here automatically.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- Reject Appointment Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <form id="rejectForm" method="POST" action="">
+                <div class="modal-header bg-gradient bg-danger text-white py-3 border-0 rounded-top-4" style="background-color: var(--danger) !important;">
+                    <h5 class="modal-title font-outfit fw-bold text-white" id="rejectModalLabel">Reject Appointment Request</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-dark">
+                    <p class="small text-muted mb-3">Rejecting appointment for <strong id="rejectPatientName"></strong> with <strong id="rejectDoctorName"></strong>.</p>
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label small fw-semibold text-primary">Rejection Reason (Optional)</label>
+                        <textarea class="form-control" id="rejectionReason" name="rejection_reason" rows="3" placeholder="Specify why the request is rejected..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm text-white">Confirm Rejection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const rejectModal = document.getElementById('rejectModal');
+    if (rejectModal) {
+        rejectModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const appId = button.getAttribute('data-app-id');
+            const patientName = button.getAttribute('data-patient-name');
+            const doctorName = button.getAttribute('data-doctor-name');
+            
+            rejectModal.querySelector('#rejectPatientName').textContent = patientName;
+            rejectModal.querySelector('#rejectDoctorName').textContent = doctorName;
+            
+            // Set the form action dynamically
+            const rejectForm = rejectModal.querySelector('#rejectForm');
+            rejectForm.action = `/admin/appointment/reject/${appId}`;
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% endblock %}

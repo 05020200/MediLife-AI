@@ -1,0 +1,575 @@
+{% extends "base.html" %}
+
+{% block title %}MediLife AI - Smart Patient Record & Appointment Management{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section id="home" class="hero-section d-flex align-items-center">
+    <div class="container">
+        <div class="row align-items-center py-5">
+            <div class="col-lg-6 text-center text-lg-start animate-on-scroll appear">
+                <div class="badge-premium mb-3" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); display: inline-flex; align-items: center; padding: 0.5rem 1.25rem; border-radius: 50px; font-weight: 600; font-size: 0.85rem;">
+                    <i class="fa-solid fa-sparkles me-2 text-accent animate-pulse"></i> Next-Gen Intelligent Health System
+                </div>
+                <h1 class="display-4 font-outfit text-primary fw-extrabold mb-3 lh-1">
+                    MediLife <span class="text-gradient">AI</span>
+                </h1>
+                <h2 class="h3 font-outfit text-muted-custom fw-semibold mb-4">
+                    Smart Patient Record & Appointment Management System
+                </h2>
+                <p class="lead text-muted-custom mb-5">
+                    Book appointments online, securely store medical records, upload previous consultation documents, and access your healthcare information anytime.
+                </p>
+                <div class="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-3">
+                    <a href="{{ url_for('main.book_appointment') }}" class="btn btn-premium btn-lg">Book Appointment <i class="fa-solid fa-calendar-check ms-1"></i></a>
+                    <a href="{{ url_for('main.login') }}" class="btn btn-outline-premium btn-lg">Patient Login <i class="fa-solid fa-right-to-bracket ms-1"></i></a>
+                    <a href="{{ url_for('main.register') }}" class="btn btn-premium btn-lg text-white">Register <i class="fa-solid fa-user-plus ms-1"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-6 d-flex justify-content-center mt-5 mt-lg-0 animate-on-scroll appear">
+                <img src="/static/uploads/healthcare_hero.png" alt="MediLife AI Healthcare Wallet" class="img-fluid hero-img-viz">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="py-5 bg-section-alt">
+    <div class="container py-5 animate-on-scroll">
+        <div class="text-center mb-5 max-width-600 mx-auto">
+            <h2 class="h1 font-outfit text-primary fw-bold mb-3">About MediLife AI</h2>
+            <p class="text-muted-custom">
+                Empowering patients and clinics with intelligent, digital healthcare workflow automation and record security.
+            </p>
+        </div>
+        
+        <div class="row align-items-center mb-5">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="pe-lg-4">
+                    <h3 class="h3 font-outfit text-primary mb-3">Our Core Philosophy</h3>
+                    <p class="text-muted-custom mb-3">
+                        At MediLife AI, the patient is at the center of the healthcare ecosystem. Our platform is designed to replace cumbersome folders of paper records with a streamlined, secure digital companion that patients can access from anywhere, at any time.
+                    </p>
+                    <p class="text-muted-custom mb-4">
+                        By integrating medical history, clinical documentation, and diagnostic report uploads into a unified pipeline, we ensure that doctors can instantly review previous consultations, helping provide seamless continuity of care.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm">
+                            <div class="text-primary mb-3"><i class="fa-solid fa-bullseye fs-3"></i></div>
+                            <h5 class="font-outfit text-primary fw-bold mb-2">Our Mission</h5>
+                            <p class="small text-muted-custom mb-0">To modernize digital patient management with secure, accessibility-driven records systems.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm">
+                            <div class="text-accent mb-3"><i class="fa-solid fa-eye fs-3"></i></div>
+                            <h5 class="font-outfit text-primary fw-bold mb-2">Our Vision</h5>
+                            <p class="small text-muted-custom mb-0">A paperless clinical environment where health history connects securely in seconds.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-10">
+                <div class="glass-card p-5 border-0 bg-white shadow-sm">
+                    <h4 class="font-outfit text-primary fw-bold mb-4">Objectives & Benefits</h4>
+                    <ul class="list-unstyled d-flex flex-column gap-3 mb-0">
+                        <li class="d-flex align-items-start gap-3">
+                            <div class="bg-success-glow p-2 rounded text-success"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <h6 class="mb-1 text-primary fw-bold">Ecosystem Accessibility</h6>
+                                <p class="small text-muted-custom mb-0">Instantly browse diagnosis, clinical suggestions, and past prescription logs online.</p>
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-start gap-3">
+                            <div class="bg-primary-glow p-2 rounded text-primary"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <h6 class="mb-1 text-primary fw-bold">Real-Time Doctor Updates</h6>
+                                <p class="small text-muted-custom mb-0">Schedule visits and receive instant approval notifications on confirmation status.</p>
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-start gap-3">
+                            <div class="bg-accent-glow p-2 rounded text-accent"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <h6 class="mb-1 text-primary fw-bold">Doctor Time Optimization</h6>
+                                <p class="small text-muted-custom mb-0">Unified timelines allow doctors to read reports in under 10 seconds before consultations.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5 bg-white">
+    <div class="container py-5 animate-on-scroll">
+        <div class="text-center mb-5 max-width-600 mx-auto">
+            <h2 class="h1 font-outfit text-primary fw-bold mb-3">Core Features</h2>
+            <p class="text-muted-custom">
+                Designed to put patients first, MediLife AI bridges the gap between patient coordination and physician analysis.
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card-feature glass-card p-4 text-center h-100 transition-all hover-translate-y bg-white border border-light shadow-sm">
+                    <div class="feature-icon-wrapper mx-auto mb-4 bg-primary-glow">
+                        <i class="fa-solid fa-calendar-days text-primary fs-4"></i>
+                    </div>
+                    <h3 class="h4 font-outfit text-primary mb-3">Appointment Booking</h3>
+                    <p class="text-muted-custom small mb-0">
+                        Patients can easily schedule appointments directly with their preferred doctors and receive real-time status updates on confirmation.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-feature glass-card p-4 text-center h-100 transition-all hover-translate-y bg-white border border-light shadow-sm">
+                    <div class="feature-icon-wrapper mx-auto mb-4 bg-accent-glow">
+                        <i class="fa-solid fa-file-medical text-accent fs-4"></i>
+                    </div>
+                    <h3 class="h4 font-outfit text-primary mb-3">Digital Medical Records</h3>
+                    <p class="text-muted-custom small mb-0">
+                        A centralized patient medical history timeline storing consultations, diagnoses, prescriptions, and physician comments.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-feature glass-card p-4 text-center h-100 transition-all hover-translate-y bg-white border border-light shadow-sm">
+                    <div class="feature-icon-wrapper mx-auto mb-4 bg-success-glow">
+                        <i class="fa-solid fa-file-arrow-up text-success fs-4"></i>
+                    </div>
+                    <h3 class="h4 font-outfit text-primary mb-3">Upload Previous Reports</h3>
+                    <p class="text-muted-custom small mb-0">
+                        Store and access diagnostic uploads (MRI, CT scans, blood tests, ECGs) in a secure, role-authorized digital repository.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-feature glass-card p-4 text-center h-100 transition-all hover-translate-y bg-white border border-light shadow-sm">
+                    <div class="feature-icon-wrapper mx-auto mb-4 bg-primary-glow">
+                        <i class="fa-solid fa-user-doctor text-primary fs-4"></i>
+                    </div>
+                    <h3 class="h4 font-outfit text-primary mb-3">Consultation History</h3>
+                    <p class="text-muted-custom small mb-0">
+                        Streamlined clinical workstation for doctors to document current consultations while reviewing integrated summaries of previous patient visits.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-feature glass-card p-4 text-center h-100 transition-all hover-translate-y bg-white border border-light shadow-sm">
+                    <div class="feature-icon-wrapper mx-auto mb-4 bg-accent-glow">
+                        <i class="fa-solid fa-shield-halved text-accent fs-4"></i>
+                    </div>
+                    <h3 class="h4 font-outfit text-primary mb-3">Secure Patient Info</h3>
+                    <p class="text-muted-custom small mb-0">
+                        Top-tier encryption keeps patient data completely protected, conforming to clinical storage guidelines and credentials isolation.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-feature glass-card p-4 text-center h-100 transition-all hover-translate-y bg-white border border-light shadow-sm">
+                    <div class="feature-icon-wrapper mx-auto mb-4 bg-success-glow">
+                        <i class="fa-solid fa-mobile-screen text-success fs-4"></i>
+                    </div>
+                    <h3 class="h4 font-outfit text-primary mb-3">Responsive Access</h3>
+                    <p class="text-muted-custom small mb-0">
+                        Fully responsive patient and doctor dashboards styled with clean layouts for seamless performance on desktop, tablet, and mobile.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="py-5 bg-section-alt">
+    <div class="container py-5 animate-on-scroll">
+        <div class="text-center mb-5 max-width-600 mx-auto">
+            <h2 class="h1 font-outfit text-primary fw-bold mb-3">How It Works</h2>
+            <p class="text-muted-custom">A simple, efficient workflow connecting patients and healthcare providers.</p>
+        </div>
+        
+        <div class="workflow-timeline">
+            <div class="timeline-step-item">
+                <div class="timeline-step-badge">1</div>
+                <div class="timeline-step-content">
+                    <h5 class="font-outfit text-primary fw-bold">Patient Registration</h5>
+                    <p class="small text-muted mb-0">Create a secure healthcare profile in a few clicks to store personal info and credentials.</p>
+                </div>
+            </div>
+            <div class="timeline-step-item">
+                <div class="timeline-step-badge">2</div>
+                <div class="timeline-step-content">
+                    <h5 class="font-outfit text-primary fw-bold">Book Appointment</h5>
+                    <p class="small text-muted mb-0">Select your doctor, convenient day, and time slot directly from the Patient Dashboard.</p>
+                </div>
+            </div>
+            <div class="timeline-step-item">
+                <div class="timeline-step-badge">3</div>
+                <div class="timeline-step-content">
+                    <h5 class="font-outfit text-primary fw-bold">Admin Approval</h5>
+                    <p class="small text-muted mb-0">Medical administrators review and confirm slots dynamically, updating patient notification logs.</p>
+                </div>
+            </div>
+            <div class="timeline-step-item">
+                <div class="timeline-step-badge">4</div>
+                <div class="timeline-step-content">
+                    <h5 class="font-outfit text-primary fw-bold">Doctor Consultation</h5>
+                    <p class="small text-muted mb-0">Consult with the specialist who accesses your comprehensive file summaries instantly.</p>
+                </div>
+            </div>
+            <div class="timeline-step-item">
+                <div class="timeline-step-badge">5</div>
+                <div class="timeline-step-content">
+                    <h5 class="font-outfit text-primary fw-bold">Consultation Saved</h5>
+                    <p class="small text-muted mb-0">The prescription details, diagnoses, and medical notes are logged immediately into the database.</p>
+                </div>
+            </div>
+            <div class="timeline-step-item">
+                <div class="timeline-step-badge">6</div>
+                <div class="timeline-step-content">
+                    <h5 class="font-outfit text-primary fw-bold">View Medical History</h5>
+                    <p class="small text-muted mb-0">Access complete consultation transcripts, summaries, and digital records anytime.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose MediLife AI Section -->
+<section id="why-choose" class="py-5 bg-white">
+    <div class="container py-5 animate-on-scroll">
+        <div class="text-center mb-5 max-width-600 mx-auto">
+            <h2 class="h1 font-outfit text-primary fw-bold mb-3">Why Choose MediLife AI</h2>
+            <p class="text-muted-custom">Modernizing healthcare accessibility through advanced technology integrations.</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Card 1: Easy Appointment Booking -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm card-hover-scale d-flex flex-column align-items-start">
+                    <div class="mb-3 text-primary bg-primary bg-opacity-10 p-3 rounded-3">
+                        <i class="fa-solid fa-calendar-check fs-3"></i>
+                    </div>
+                    <h5 class="font-outfit text-primary fw-bold mb-2">Easy Appointment Booking</h5>
+                    <p class="small text-muted-custom mb-0">Schedule consultations with specialized doctors instantly using our intuitive booking workflow.</p>
+                </div>
+            </div>
+            <!-- Card 2: Secure Digital Health Records -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm card-hover-scale d-flex flex-column align-items-start">
+                    <div class="mb-3 text-primary bg-primary bg-opacity-10 p-3 rounded-3">
+                        <i class="fa-solid fa-file-prescription fs-3"></i>
+                    </div>
+                    <h5 class="font-outfit text-primary fw-bold mb-2">Secure Digital Health Records</h5>
+                    <p class="small text-muted-custom mb-0">Keep your clinical records, prescriptions, and consult notes safe in a centralized digital workspace.</p>
+                </div>
+            </div>
+            <!-- Card 3: Previous Medical History -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm card-hover-scale d-flex flex-column align-items-start">
+                    <div class="mb-3 text-primary bg-primary bg-opacity-10 p-3 rounded-3">
+                        <i class="fa-solid fa-clock-rotate-left fs-3"></i>
+                    </div>
+                    <h5 class="font-outfit text-primary fw-bold mb-2">Previous Medical History</h5>
+                    <p class="small text-muted-custom mb-0">Browse past clinical consultation logs, diagnostics, and doctor summaries in a seamless chronological timeline.</p>
+                </div>
+            </div>
+            <!-- Card 4: Upload Medical Documents -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm card-hover-scale d-flex flex-column align-items-start">
+                    <div class="mb-3 text-primary bg-primary bg-opacity-10 p-3 rounded-3">
+                        <i class="fa-solid fa-file-arrow-up fs-3"></i>
+                    </div>
+                    <h5 class="font-outfit text-primary fw-bold mb-2">Upload Medical Documents</h5>
+                    <p class="small text-muted-custom mb-0">Safely upload lab reports, PDFs, scans, and blood works directly into your secure patient profile.</p>
+                </div>
+            </div>
+            <!-- Card 5: Appointment Notifications -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm card-hover-scale d-flex flex-column align-items-start">
+                    <div class="mb-3 text-primary bg-primary bg-opacity-10 p-3 rounded-3">
+                        <i class="fa-solid fa-bell fs-3"></i>
+                    </div>
+                    <h5 class="font-outfit text-primary fw-bold mb-2">Appointment Notifications</h5>
+                    <p class="small text-muted-custom mb-0">Receive instant updates on appointment status approvals, modifications, and schedule timings.</p>
+                </div>
+            </div>
+            <!-- Card 6: Privacy & Security -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm card-hover-scale d-flex flex-column align-items-start">
+                    <div class="mb-3 text-primary bg-primary bg-opacity-10 p-3 rounded-3">
+                        <i class="fa-solid fa-shield-halved fs-3"></i>
+                    </div>
+                    <h5 class="font-outfit text-primary fw-bold mb-2">Privacy & Security</h5>
+                    <p class="small text-muted-custom mb-0">Strict HIPAA-aligned encryption standards protect your confidential medical data from unauthorized access.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section id="testimonials" class="py-5 bg-section-alt">
+    <div class="container py-5 animate-on-scroll">
+        <div class="text-center mb-5 max-width-600 mx-auto">
+            <h2 class="h1 font-outfit text-primary fw-bold mb-3">What Our Users Say</h2>
+            <p class="text-muted-custom">Real stories from patient communities and medical institutions.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm d-flex flex-column justify-content-between">
+                    <p class="text-muted small italic">"Booking appointments used to take multiple phone calls. With MediLife AI, I can pick a slot, upload my blood reports, and consult with the doctor online. Highly recommended!"</p>
+                    <div class="d-flex align-items-center mt-3">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 40px; height: 40px;">SP</div>
+                        <div>
+                            <h6 class="font-outfit text-primary fw-bold mb-0">Sarah Parker</h6>
+                            <span class="small text-muted">Patient Portal User</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm d-flex flex-column justify-content-between">
+                    <p class="text-muted small italic">"Having the patient's entire medical record timeline and AI-generated case summaries instantly available before a consultation has completely transformed my daily clinical workflow."</p>
+                    <div class="d-flex align-items-center mt-3">
+                        <div class="bg-accent text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 40px; height: 40px;">DC</div>
+                        <div>
+                            <h6 class="font-outfit text-primary fw-bold mb-0">Dr. Sarah Connor</h6>
+                            <span class="small text-muted">Lead Consultant Doctor</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card p-4 h-100 border-0 bg-white shadow-sm d-flex flex-column justify-content-between">
+                    <p class="text-muted small italic">"Administration overhead dropped by over 40% after implementing MediLife AI. Reviewing appointments and managing doctor leaves is intuitive and completely automated."</p>
+                    <div class="d-flex align-items-center mt-3">
+                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 40px; height: 40px;">AM</div>
+                        <div>
+                            <h6 class="font-outfit text-primary fw-bold mb-0">Arthur Miller</h6>
+                            <span class="small text-muted">Hospital Administrator</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section id="faq" class="py-5 bg-white">
+    <div class="container py-5 animate-on-scroll">
+        <div class="text-center mb-5 max-width-600 mx-auto">
+            <h2 class="h1 font-outfit text-primary fw-bold mb-3">Frequently Asked Questions</h2>
+            <p class="text-muted-custom">Find answers to general questions about appointment bookings, document uploads, and security.</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion faq-accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                How do I schedule or book an appointment?
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body small text-muted-custom">
+                                Register or log in to the Patient Portal, go to the Appointment section, select a doctor, fill in date/session details, and submit. The clinic administrator will review and update the status dynamically.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Can I upload my previous medical records or reports?
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body small text-muted-custom">
+                                Yes. From your Patient Dashboard, you can upload PDFs or images of previous lab reports, blood work, or clinical diagnostics. These will be securely stored and linked directly to your profile.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Can I cancel my appointment?
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body small text-muted-custom">
+                                Yes. Patients can cancel their appointments at any stage before the consultation has been completed. Simply click the "Cancel Appointment" button, provide an optional cancellation reason, and confirm.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFour">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                How is my health data kept secure?
+                            </button>
+                        </h2>
+                        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body small text-muted-custom">
+                                All documents and profile records are stored securely with strictly parameterized access boundaries. Doctors and authorized staff can view relevant clinical files only when providing care.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFive">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                What is the AI summary feature?
+                            </button>
+                        </h2>
+                        <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body small text-muted-custom">
+                                For consulting doctors, the system leverages Gemini AI integrations to extract clinical metadata from uploaded documents and write summaries of the patient's record history, reducing prep work.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="py-5 bg-section-alt">
+    <div class="container py-5 animate-on-scroll">
+        <div class="text-center mb-5 max-width-600 mx-auto">
+            <h2 class="h1 font-outfit text-primary fw-bold mb-3">Contact Us</h2>
+            <p class="text-muted-custom">Have questions or need assistance? Our administration team is ready to help you.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="contact-info-card p-5 rounded-4 h-100 shadow-sm d-flex flex-column justify-content-between bg-primary text-white">
+                    <div>
+                        <h4 class="font-outfit mb-4 text-white">Contact Information</h4>
+                        <p class="small text-white-50 mb-5">Reach out directly via phone or email for medical center configuration inquiries.</p>
+                        
+                        <div class="d-flex flex-column gap-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-white bg-opacity-10 p-3 rounded me-3 text-white"><i class="fa-solid fa-phone fs-5"></i></div>
+                                <div>
+                                    <h6 class="mb-0 text-white font-outfit fw-bold">Emergency Support</h6>
+                                    <span class="small text-white-50">+1 (555) 0192-384</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-white bg-opacity-10 p-3 rounded me-3 text-white"><i class="fa-solid fa-envelope fs-5"></i></div>
+                                <div>
+                                    <h6 class="mb-0 text-white font-outfit fw-bold">Email Inquiries</h6>
+                                    <span class="small text-white-50">support@medilife.ai</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-white bg-opacity-10 p-3 rounded me-3 text-white"><i class="fa-solid fa-location-dot fs-5"></i></div>
+                                <div>
+                                    <h6 class="mb-0 text-white font-outfit fw-bold">Medical Center</h6>
+                                    <span class="small text-white-50">789 Health Plaza Blvd, Chicago, IL</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border-top border-white border-opacity-10 pt-4 mt-5 text-white-50 small">
+                        Support Hours: 24/7 Hotline
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-7">
+                <div class="glass-card p-5 h-100 bg-white border border-light shadow-sm">
+                    <form id="contactForm" class="custom-form h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="contactName" class="form-label small fw-semibold text-primary">Your Name</label>
+                                    <input type="text" class="form-control" id="contactName" placeholder="John Doe" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactEmail" class="form-label small fw-semibold text-primary">Email Address</label>
+                                    <input type="email" class="form-control" id="contactEmail" placeholder="john@example.com" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="contactSubject" class="form-label small fw-semibold text-primary">Subject</label>
+                                <input type="text" class="form-control" id="contactSubject" placeholder="Inquiry about services" required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="contactMessage" class="form-label small fw-semibold text-primary">Message Details</label>
+                                <textarea class="form-control" id="contactMessage" rows="5" placeholder="Write your message details..." required></textarea>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <button type="submit" class="btn btn-premium w-100 text-white py-3">Send Message <i class="fa-solid fa-paper-plane ms-1"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section id="cta" class="py-5 bg-white">
+    <div class="container animate-on-scroll">
+        <div class="cta-banner-section p-5 text-center">
+            <h2 class="display-5 font-outfit fw-bold text-white mb-3">Take Control of Your Healthcare Today</h2>
+            <p class="lead text-white-50 mb-4 max-width-600 mx-auto">Create a secure electronic medical history profile, schedule appointments, and coordinate seamlessly with specialist doctors.</p>
+            <a href="{{ url_for('main.register') }}" class="btn btn-light text-primary btn-lg font-outfit fw-bold px-5 py-3 rounded-3 shadow-sm">Register Now <i class="fa-solid fa-user-plus ms-1"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-dark text-white py-5 mt-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <h5 class="font-outfit text-white fw-bold mb-3">MediLife <span class="text-accent">AI</span></h5>
+                <p class="small text-white-50">Smart Patient Record & Appointment Management System. Built for patient ease and clinical precision.</p>
+                <div class="d-flex gap-3 mt-3">
+                    <a href="#" class="text-white-50 hover-accent"><i class="fa-brands fa-facebook fs-5"></i></a>
+                    <a href="#" class="text-white-50 hover-accent"><i class="fa-brands fa-twitter fs-5"></i></a>
+                    <a href="#" class="text-white-50 hover-accent"><i class="fa-brands fa-linkedin fs-5"></i></a>
+                    <a href="#" class="text-white-50 hover-accent"><i class="fa-brands fa-instagram fs-5"></i></a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <h5 class="font-outfit text-white fw-bold mb-3">Quick Links</h5>
+                <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+                    <li><a href="#home" class="text-white-50 text-decoration-none hover-accent">Home</a></li>
+                    <li><a href="#about" class="text-white-50 text-decoration-none hover-accent">About</a></li>
+                    <li><a href="#features" class="text-white-50 text-decoration-none hover-accent">Features</a></li>
+                    <li><a href="#faq" class="text-white-50 text-decoration-none hover-accent">FAQs</a></li>
+                    <li><a href="#contact" class="text-white-50 text-decoration-none hover-accent">Contact</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5 class="font-outfit text-white fw-bold mb-3">Contact Support</h5>
+                <p class="small text-white-50 mb-1"><i class="fa-solid fa-envelope me-2"></i> support@medilife.ai</p>
+                <p class="small text-white-50 mb-1"><i class="fa-solid fa-phone me-2"></i> +1 (555) 0192-384</p>
+                <p class="small text-white-50"><i class="fa-solid fa-location-dot me-2"></i> 789 Health Plaza Blvd, Chicago, IL</p>
+            </div>
+        </div>
+        <hr class="my-4 border-secondary">
+        <div class="text-center text-white-50 small">
+            &copy; 2026 MediLife AI. All rights reserved. Secure Health Information Custody.
+        </div>
+    </div>
+</footer>
+{% endblock %}

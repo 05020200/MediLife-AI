@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MediLife AI - Intelligent Healthcare Solutions{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}?v=5">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}?v=5">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}?v=5">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}?v=5">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}?v=5">
+    
+    <!-- Meta tags for SEO -->
+    <meta name="description" content="MediLife AI leverages advanced artificial intelligence to provide state-of-the-art health analysis, diagnosis support, and medical resource tracking.">
+    <meta name="keywords" content="health AI, medical technology, digital health, machine learning healthcare, MediLife AI">
+    <meta name="author" content="MediLife AI Team">
+
+    <!-- Google Fonts: Outfit (headings) & Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Header & Navigation -->
+    <header>
+        <nav class="navbar navbar-expand-lg fixed-top custom-navbar" id="navbar">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
+                    <div class="brand-icon-wrapper me-2" style="background: transparent; border: none; width: auto; height: auto;">
+                        <i class="fa-solid fa-shield-heart brand-logo-icon animate-pulse"></i>
+                    </div>
+                    <span class="brand-text text-primary">MediLife <span class="text-accent">AI</span></span>
+                </a>
+                <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center me-lg-4" id="navbarNavList">
+                        <li class="nav-item">
+                            <a class="nav-link px-3" href="{{ url_for('main.index') }}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link px-3" href="{{ url_for('main.index') }}#about">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link px-3" href="{{ url_for('main.index') }}#contact">Contact</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex gap-3 flex-column flex-lg-row align-items-center mt-3 mt-lg-0">
+                        {% if 'user_id' in session %}
+                            <div class="dropdown">
+                                <a class="nav-link dropdown-toggle text-primary fw-bold" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-circle-user me-1 text-primary-light"></i> {{ session['user_name'] }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end border border-light shadow-sm rounded-3 mt-2">
+                                    <li><span class="dropdown-item-text small text-muted">Role: {{ session['role']|capitalize }}</span></li>
+                                    {% if session.get('role') == 'patient' %}
+                                    <li><a class="dropdown-item small" href="{{ url_for('main.patient_dashboard') }}"><i class="fa-solid fa-gauge-high me-1 text-primary"></i> Dashboard</a></li>
+                                    <li><a class="dropdown-item small" href="{{ url_for('main.medical_history') }}"><i class="fa-solid fa-file-medical me-1 text-primary"></i> Medical History</a></li>
+                                    {% elif session.get('role') == 'doctor' %}
+                                    <li><a class="dropdown-item small" href="{{ url_for('main.doctor_dashboard') }}"><i class="fa-solid fa-gauge-high me-1 text-primary"></i> Dashboard</a></li>
+                                    {% elif session.get('role') == 'admin' %}
+                                    <li><a class="dropdown-item small" href="{{ url_for('main.admin_dashboard') }}"><i class="fa-solid fa-gauge-high me-1 text-primary"></i> Dashboard</a></li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger small" href="{{ url_for('main.logout') }}"><i class="fa-solid fa-right-from-bracket me-1"></i> Logout</a></li>
+                                </ul>
+                            </div>
+                        {% else %}
+                            <a href="{{ url_for('main.login') }}" class="btn btn-outline-premium btn-sm w-100 px-4 text-center">Login</a>
+                            <a href="{{ url_for('main.register') }}" class="btn btn-premium btn-sm w-100 px-4 text-center text-white">Register</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow-1">
+        <!-- Floating Toast Container -->
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2050; margin-top: 5.5rem;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="toast align-items-center text-dark bg-white border border-light shadow-lg rounded-3 custom-toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+                            <div class="d-flex p-2">
+                                <div class="toast-body d-flex align-items-center">
+                                    {% if category == 'success' %}
+                                        <i class="fa-solid fa-circle-check fs-5 text-success me-2"></i>
+                                    {% elif category == 'warning' %}
+                                        <i class="fa-solid fa-triangle-exclamation fs-5 text-warning me-2"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-circle-exclamation fs-5 text-danger me-2"></i>
+                                    {% endif %}
+                                    <div class="fw-medium text-dark">{{ message }}</div>
+                                </div>
+                                <button type="button" class="btn-close m-auto me-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% block content %}{% endblock %}
+    </main>
+
+
+
+    <!-- Bootstrap 5 Bundle JS (with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    
+    <!-- Custom Javascript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

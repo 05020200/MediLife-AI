@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Login - MediLife AI{% endblock %}
+
+{% block content %}
+<section class="login-section py-5 d-flex align-items-center" style="min-height: 90vh;">
+    <div class="container my-4">
+        <div class="row g-4 align-items-center justify-content-center">
+            <!-- Left Side: Login Form -->
+            <div class="col-lg-5 col-md-8">
+                <div class="glass-card p-5 border border-primary-subtle rounded-4 shadow-lg animate-on-scroll appear">
+                    <div class="text-center mb-4">
+                        <div class="brand-icon-wrapper mx-auto mb-3 bg-primary-glow">
+                            <i class="fa-solid fa-user-shield brand-icon text-primary fs-3 animate-pulse"></i>
+                        </div>
+                        <h2 class="h3 font-outfit text-primary fw-bold">Welcome Back</h2>
+                        <p class="small text-muted-custom">Access your secure clinical workspace</p>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('main.login') }}" class="custom-form">
+                        <!-- Role Dropdown -->
+                        <div class="mb-3">
+                            <label for="loginRole" class="form-label small fw-semibold text-primary">Access Role</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-users-gear text-primary"></i></span>
+                                <select class="form-select border-start-0 bg-white" id="loginRole" name="role" required>
+                                    <option value="" disabled selected>Select your portal role</option>
+                                    <option value="patient">Patient Portal</option>
+                                    <option value="doctor">Doctor Portal</option>
+                                    <option value="admin">Admin Portal</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Email Input -->
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label small fw-semibold text-primary">Email Address / Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-envelope text-primary"></i></span>
+                                <input type="text" class="form-control border-start-0" id="loginEmail" name="identity" placeholder="name@medilife.ai or username" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Password Input -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="loginPassword" class="form-label small fw-semibold text-primary mb-0">Password</label>
+                                <a href="#forgot" class="small text-accent text-decoration-none hover-accent fw-bold" onclick="alert('Simulation: Password recovery instructions have been sent (Mock link).');">Forgot Password?</a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-lock text-primary"></i></span>
+                                <input type="password" class="form-control border-start-0" id="loginPassword" name="password" placeholder="Enter your password" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Remember Me checkbox -->
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input text-primary" id="loginRemember">
+                            <label class="form-check-label small text-muted-custom" for="loginRemember">Remember my device</label>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-premium w-100 text-white py-2 mb-3">Sign In <i class="fa-solid fa-right-to-bracket ms-1"></i></button>
+                    </form>
+                    
+                    <div class="text-center mt-3 pt-3 border-top border-light">
+                        <span class="small text-muted-custom">New to MediLife AI? <a href="{{ url_for('main.register') }}" class="text-accent text-decoration-none fw-bold">Create account</a></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Side: Healthcare Illustration (Split Screen) -->
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="login-split-img-side text-center p-5 shadow-sm border border-light">
+                    <div>
+                        <img src="/static/uploads/login_doctor_viz.png" alt="Clinical Workspace Illustration" class="img-fluid mb-4" style="max-height: 380px; filter: drop-shadow(0 20px 30px rgba(37, 99, 235, 0.1));">
+                        <h4 class="font-outfit text-primary fw-bold mb-2">Secure Health Intelligence</h4>
+                        <p class="text-muted-custom small px-4 mb-0">MediLife AI connects diagnostic records, consultation tracking, and patient scheduling securely under clinical credential standards.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

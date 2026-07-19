@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Appointment History - MediLife AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .history-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        box-shadow: var(--shadow-medium);
+    }
+    
+    .history-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        border-radius: 19px 19px 0 0;
+        padding: 2.5rem;
+    }
+
+    .stat-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.35rem 0.65rem;
+        border-radius: 50rem;
+        display: inline-block;
+    }
+    
+    .badge-pending {
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #d97706;
+    }
+    
+    .badge-confirmed {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #059669;
+    }
+    
+    .badge-cancelled {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #dc2626;
+    }
+    
+    .badge-completed {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #2563eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="history-section py-5 my-3">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Appointment History Card Container -->
+                <div class="history-card animate-fade-in-up">
+                    <!-- Premium Header -->
+                    <div class="history-header text-white text-center">
+                        <div class="brand-icon-wrapper bg-white mx-auto mb-3" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-clock-rotate-left text-primary fs-4"></i>
+                        </div>
+                        <h2 class="h3 font-outfit fw-bold mb-1">Appointment History</h2>
+                        <p class="small opacity-75 mb-0">Review all your previous, current, and requested consultations</p>
+                    </div>
+                    
+                    <!-- Table Body -->
+                    <div class="p-4 p-md-5">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="text-muted small">Total Records Found: <strong class="text-primary">{{ appointments|length }}</strong></span>
+                            <a href="{{ url_for('main.book_appointment') }}" class="btn btn-premium btn-sm text-white"><i class="fa-solid fa-plus me-1"></i> Book New Consult</a>
+                        </div>
+                        
+                        {% if appointments %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col" class="small text-primary fw-bold">Doctor</th>
+                                            <th scope="col" class="small text-primary fw-bold">Department</th>
+                                            <th scope="col" class="small text-primary fw-bold">Date</th>
+                                            <th scope="col" class="small text-primary fw-bold">Session</th>
+                                            <th scope="col" class="small text-primary fw-bold text-center">Status</th>
+                                            <th scope="col" class="small text-primary fw-bold">Details / Reason</th>
+                                            <th scope="col" class="small text-primary fw-bold text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for app in appointments %}
+                                            <tr>
+                                                <td class="small fw-semibold">Dr. {{ app.doctor.first_name }} {{ app.doctor.last_name }}</td>
+                                                <td class="small text-muted">{{ app.doctor.specialization }}</td>
+                                                <td class="small">{{ (app.appointment_date | to_ist).strftime('%B %d, %Y') }}</td>
+                                                <td class="small">
+                                                    <span class="badge {% if app.session == 'Morning' %}bg-primary-glow text-primary{% else %}bg-accent-glow text-accent{% endif %}">
+                                                        {{ app.session }}
+                                                    </span>
+                                                </td>
+                                                <td class="small text-center">
+                                                    <span class="stat-badge {% if app.status == 'Pending Approval' %}badge-pending{% elif app.status == 'Approved' %}badge-confirmed{% elif app.status == 'Completed' %}badge-completed{% else %}badge-cancelled{% endif %}">
+                                                        {{ app.status }}
+                                                    </span>
+                                                </td>
+                                                <td class="small text-muted">
+                                                    {% if app.status == 'Rejected' and app.rejection_reason %}
+                                                        <span class="text-danger">Rejected: {{ app.rejection_reason }}</span>
+                                                    {% elif app.status == 'Cancelled' and app.cancellation_reason %}
+                                                        <span class="text-danger">Cancelled: {{ app.cancellation_reason }}</span>
+                                                    {% elif app.reason %}
+                                                        {{ app.reason }}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if app.status == 'Completed' or app.status == 'Cancelled' or app.consultation %}
+                                                        <button type="button" class="btn btn-outline-danger btn-xs" disabled>
+                                                            <i class="fa-solid fa-ban me-1"></i> Cancel Appointment
+                                                        </button>
+                                                    {% else %}
+                                                        <button type="button" class="btn btn-outline-danger btn-xs btn-cancel-appointment"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#cancelAppointmentModal"
+                                                                data-appointment-id="{{ app.id }}">
+                                                            <i class="fa-solid fa-ban me-1"></i> Cancel Appointment
+                                                        </button>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5 text-muted">
+                                <i class="fa-regular fa-folder-open fs-2 text-light mb-3"></i>
+                                <p class="small mb-3">No appointment history records found in your database.</p>
+                                <a href="{{ url_for('main.book_appointment') }}" class="btn btn-premium text-white btn-sm">Schedule an Appointment</a>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Back to Dashboard link -->
+                        <div class="mt-4 pt-3 border-top border-light d-flex justify-content-start">
+                            <a href="{{ url_for('main.patient_dashboard') }}" class="btn btn-outline-premium btn-sm"><i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard</a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Cancel Appointment Confirmation Modal -->
+<div class="modal fade" id="cancelAppointmentModal" tabindex="-1" aria-labelledby="cancelAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <form id="cancelAppointmentForm" method="POST" action="">
+                <div class="modal-header bg-gradient bg-danger text-white py-3 border-0 rounded-top-4" style="background-color: var(--danger) !important;">
+                    <h5 class="modal-title font-outfit fw-bold text-white" id="cancelAppointmentModalLabel">Cancel Appointment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-dark text-start">
+                    <p class="fw-semibold">Are you sure you want to cancel this appointment?</p>
+                    <div class="mb-3">
+                        <label for="cancellationReason" class="form-label small fw-semibold text-primary">Cancellation Reason (Optional)</label>
+                        <textarea class="form-control" id="cancellationReason" name="cancellation_reason" rows="3" placeholder="Provide a reason for cancellation (optional)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 border-top border-light bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Go Back</button>
+                    <button type="submit" class="btn btn-danger btn-sm text-white">Cancel Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const cancelModal = document.getElementById('cancelAppointmentModal');
+    if (cancelModal) {
+        cancelModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const appId = button.getAttribute('data-appointment-id');
+            const form = cancelModal.querySelector('#cancelAppointmentForm');
+            form.action = `/patient/appointment/cancel/${appId}`;
+            // Clear prior inputs
+            const reasonInput = cancelModal.querySelector('#cancellationReason');
+            if (reasonInput) {
+                reasonInput.value = '';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
